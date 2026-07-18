@@ -1,0 +1,8 @@
+{
+  "name": "EcoClean SL",
+  "description": "Smart Waste Management and Environmental Monitoring Platform for Sierra Leone, empowering citizens, collection teams, and environmental agencies.",
+  "owner": "ECOCLEAN SL",
+  "deploymentModel": "Self-hosted",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["SMART_WASTE_MANAGEMENT", "ENVIRONMENTAL_INTELLIGENCE"]
+}

@@ -1,0 +1,62 @@
+{
+  "name": "ecoclean-sl-platform",
+  "description": "Proprietary ECOCLEAN SL smart waste management platform",
+  "author": "ECOCLEAN SL",
+  "license": "UNLICENSED",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port=3000 --host=0.0.0.0",
+    "dev:api": "tsx watch server/server.ts",
+    "start:api": "tsx server/server.ts",
+    "db:migrate": "tsx server/migrate.ts",
+    "db:seed": "tsx server/seed.ts",
+    "db:normalize": "tsx server/normalize.ts",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean": "node --input-type=module -e \"import fs from 'node:fs'; fs.rmSync('dist',{recursive:true,force:true}); fs.rmSync('server.js',{force:true});\"",
+    "lint": "tsc --noEmit"
+    ,"test": "tsx --test tests/**/*.test.ts",
+    "test:load": "tsx tests/loadTest.ts",
+    "test:load:certification": "tsx tests/loadTest.ts --certification",
+    "test:security": "tsx tests/securityValidation.ts"
+    ,"test:ux": "tsx tests/userExperienceValidation.ts"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/plus-jakarta-sans": "^5.2.8",
+    "@tailwindcss/vite": "^4.1.14",
+    "@vitejs/plugin-react": "^5.0.4",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "multer": "^2.2.0",
+    "mysql2": "^3.23.0",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "vite": "^6.2.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/leaflet": "^1.9.21",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^22.14.0",
+    "autoprefixer": "^10.4.21",
+    "esbuild": "^0.25.0",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3"
+  }
+}

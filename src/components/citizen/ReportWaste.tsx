@@ -1,0 +1,459 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { operationalStore } from '../../lib/operationalStore';
+import { MapPin, Camera, Video, Sparkles, Send, FileText, X, Compass, Check } from 'lucide-react';
+import { DISTRICTS, MUNICIPALITIES, WASTE_CATEGORIES, PRIORITIES, Report, GPSCoordinates } from '../../lib/citizenData';
+
+interface ReportWasteProps {
+  onSubmit: (report: Omit<Report, 'id' | 'referenceNumber' | 'status' | 'date'> & {evidenceFiles?:File[]}) => void;
+  onCancel: () => void;
+}
+
+export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState(WASTE_CATEGORIES[0]);
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
+  const [district, setDistrict] = useState(DISTRICTS[0]);
+  const [municipality, setMunicipality] = useState('');
+  const [ward, setWard] = useState('Ward 301');
+  const [zone, setZone] = useState('Zone 1 (Aberdeen)');
+  const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
+  const [gps, setGps] = useState<GPSCoordinates | null>(null);
+  const [isDetectingGps, setIsDetectingGps] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [evidenceFiles,setEvidenceFiles]=useState<File[]>([]);
+  const photoInput=useRef<HTMLInputElement>(null);
+  const [video, setVideo] = useState<string | undefined>(undefined);
+  const [draftSaved, setDraftSaved] = useState(false);
+
+  // Update municipality options based on selected district
+  useEffect(() => {
+    const list = MUNICIPALITIES[district];
+    if (list && list.length > 0) {
+      setMunicipality(list[0]);
+    } else {
+      setMunicipality('');
+    }
+  }, [district]);
+
+  // Handle GPS detection simulation
+  const handleDetectGPS = () => {
+    setIsDetectingGps(true);
+    setTimeout(() => {
+      // Simulate realistic coordinates in Freetown, Bo, Makeni, etc.
+      let lat = 8.4844;
+      let lng = -13.2344;
+      if (district.includes('Bo')) {
+        lat = 7.9628;
+        lng = -11.7401;
+      } else if (district.includes('Kenema')) {
+        lat = 7.8731;
+        lng = -11.1867;
+      } else if (district.includes('Bombali')) {
+        lat = 8.8824;
+        lng = -12.0435;
+      } else {
+        // Random slight offsets around Freetown for variety
+        lat = 8.48 + (Math.random() - 0.5) * 0.05;
+        lng = -13.23 + (Math.random() - 0.5) * 0.05;
+      }
+      setGps({ lat: parseFloat(lat.toFixed(4)), lng: parseFloat(lng.toFixed(4)) });
+      setIsDetectingGps(false);
+    }, 1200);
+  };
+
+  const handlePhotoUpload = (files:FileList|null) => {if(!files)return;const accepted=Array.from(files).filter(file=>['image/jpeg','image/png','image/webp'].includes(file.type)&&file.size<=8*1024*1024).slice(0,5-evidenceFiles.length);setEvidenceFiles(current=>[...current,...accepted]);setPhotos(current=>[...current,...accepted.map(file=>URL.createObjectURL(file))]);};
+
+  // Simulate Video Upload
+  const handleVideoUpload = () => {
+    setVideo('Simulated_Incident_Video.mp4');
+  };
+
+  const handleSaveDraft = () => {
+    const draft = {
+      title,
+      category,
+      description,
+      location,
+      district,
+      municipality,
+      ward,
+      zone,
+      priority,
+      photos,
+      video,
+      gps: gps || { lat: 8.4844, lng: -13.2344 }
+    };
+    operationalStore.setItem('ecoclean_citizen_draft_report', JSON.stringify(draft));
+    setDraftSaved(true);
+    setTimeout(() => setDraftSaved(false), 3000);
+  };
+
+  const loadDraft = () => {
+    const stored = operationalStore.getItem('ecoclean_citizen_draft_report');
+    if (stored) {
+      try {
+        const draft = JSON.parse(stored);
+        setTitle(draft.title || '');
+        setCategory(draft.category || WASTE_CATEGORIES[0]);
+        setDescription(draft.description || '');
+        setLocation(draft.location || '');
+        setDistrict(draft.district || DISTRICTS[0]);
+        setWard(draft.ward || 'Ward 301');
+        setZone(draft.zone || 'Zone 1 (Aberdeen)');
+        setPriority(draft.priority || 'Medium');
+        setPhotos(draft.photos || []);
+        setVideo(draft.video);
+        setGps(draft.gps);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !description.trim() || !location.trim()) {
+      return;
+    }
+
+    const defaultGps = gps || { lat: 8.4844, lng: -13.2344 };
+
+    onSubmit({
+      title,
+      category,
+      description,
+      location,
+      district,
+      municipality,
+      ward,
+      zone,
+      priority,
+      photos: photos.length > 0 ? photos : ['/assets/demo-waste.svg'],
+      video,
+      gps: defaultGps
+      ,evidenceFiles
+    });
+
+    // Clear draft on successful submission
+    operationalStore.removeItem('ecoclean_citizen_draft_report');
+  };
+
+  const hasDraft = !!operationalStore.getItem('ecoclean_citizen_draft_report');
+
+  return (
+    <div className="bg-white rounded-3xl border border-gray-200/80 shadow-sm p-6 sm:p-8 max-w-4xl mx-auto" id="report-waste-form">
+      {/* Form Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+        <div>
+          <span className="bg-brand-primary/10 border border-brand-primary/15 text-brand-primary text-[10px] font-mono font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+            Step 1 of 2: Information Intake
+          </span>
+          <h2 className="text-xl font-extrabold text-gray-900 mt-2">Report a Waste Issue</h2>
+          <p className="text-xs text-gray-400 mt-1">
+            Provide precise details to help municipal cleanup crews respond efficiently.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {hasDraft && (
+            <button
+              type="button"
+              onClick={loadDraft}
+              className="text-xs font-bold text-brand-primary bg-brand-accent/20 hover:bg-brand-accent/40 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Load Saved Draft</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Core details */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-gray-500 uppercase">Issue Title *</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g., Overflowing trash skip, blocked market gutter"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full bg-gray-50/50 border border-gray-200 focus:border-brand-primary focus:bg-white rounded-2xl py-3.5 px-4 text-xs font-medium text-gray-800 transition-all focus:outline-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-gray-500 uppercase">Waste Category *</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full bg-gray-50/50 border border-gray-200 focus:border-brand-primary focus:bg-white rounded-2xl py-3.5 px-4 text-xs font-medium text-gray-800 transition-all focus:outline-none cursor-pointer"
+            >
+              {WASTE_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="space-y-2">
+          <label className="block text-xs font-bold text-gray-500 uppercase">Detailed Description *</label>
+          <textarea
+            rows={4}
+            required
+            placeholder="Describe what kind of waste it is, the approximate size/volume, smells, public blockage, or anything that helps crews prepare."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full bg-gray-50/50 border border-gray-200 focus:border-brand-primary focus:bg-white rounded-2xl py-3.5 px-4 text-xs font-medium text-gray-800 transition-all focus:outline-none"
+          />
+        </div>
+
+        {/* Administrative Jurisdiction */}
+        <div className="bg-gray-50/50 border border-gray-200/60 p-5 rounded-2xl space-y-4">
+          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+            <MapPin className="w-4 h-4 text-brand-primary" />
+            <span>Regional Administrative Jurisdiction</span>
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-gray-400 uppercase">District *</label>
+              <select
+                value={district}
+                onChange={(e) => setDistrict(e.target.value)}
+                className="w-full bg-white border border-gray-200 focus:border-brand-primary rounded-xl p-2.5 text-xs text-gray-800 cursor-pointer"
+              >
+                {DISTRICTS.map((dst) => (
+                  <option key={dst} value={dst}>
+                    {dst}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-gray-400 uppercase">Municipality *</label>
+              <input
+                type="text"
+                readOnly
+                value={municipality}
+                className="w-full bg-gray-100 border border-gray-200 rounded-xl p-2.5 text-xs text-gray-500 font-medium"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-gray-400 uppercase">Ward / Constituency *</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g., Ward 301"
+                value={ward}
+                onChange={(e) => setWard(e.target.value)}
+                className="w-full bg-white border border-gray-200 focus:border-brand-primary rounded-xl p-2.5 text-xs text-gray-800"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-gray-400 uppercase">Zone *</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g., Zone 1"
+                value={zone}
+                onChange={(e) => setZone(e.target.value)}
+                className="w-full bg-white border border-gray-200 focus:border-brand-primary rounded-xl p-2.5 text-xs text-gray-800"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            <div className="md:col-span-2 space-y-1.5">
+              <label className="block text-[10px] font-bold text-gray-400 uppercase">Specific Street Address / Landmark *</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g., 24 Kroo Town Road, right next to the vegetable market"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full bg-white border border-gray-200 focus:border-brand-primary rounded-xl p-2.5 text-xs text-gray-800"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-gray-400 uppercase">Response Priority *</label>
+              <div className="flex bg-white border border-gray-200 rounded-xl p-1 gap-1">
+                {PRIORITIES.map((pri) => (
+                  <button
+                    key={pri}
+                    type="button"
+                    onClick={() => setPriority(pri)}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                      priority === pri
+                        ? pri === 'High'
+                          ? 'bg-red-500 text-white shadow-sm'
+                          : pri === 'Medium'
+                          ? 'bg-brand-primary text-white shadow-sm'
+                          : 'bg-gray-500 text-white shadow-sm'
+                        : 'text-gray-400 hover:text-gray-700'
+                    }`}
+                  >
+                    {pri}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Evidence Attachments & GPS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Photo and Video simulation */}
+          <div className="space-y-3 bg-gray-50/50 border border-gray-200/60 p-5 rounded-2xl">
+            <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-brand-primary" />
+              <span>Media Upload (Evidence)</span>
+            </h3>
+
+            <div className="grid grid-cols-2 gap-3">
+              <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={e=>handlePhotoUpload(e.target.files)}/><button
+                type="button"
+                onClick={()=>photoInput.current?.click()}
+                className="border-2 border-dashed border-gray-200 hover:border-brand-primary/50 bg-white p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer hover:bg-emerald-50/10 group"
+              >
+                <div className="w-9 h-9 rounded-full bg-brand-primary/5 text-brand-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Camera className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[11px] font-bold text-gray-700">Attach Photo</span>
+                <span className="text-[9px] text-gray-400">JPG, PNG or WebP • 8 MB</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleVideoUpload}
+                disabled={!!video}
+                className={`border-2 border-dashed p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all ${
+                  video
+                    ? 'border-brand-success bg-emerald-50/20 cursor-not-allowed'
+                    : 'border-gray-200 hover:border-brand-primary/50 bg-white hover:bg-emerald-50/10 cursor-pointer group'
+                }`}
+              >
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                  video ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-primary/5 text-brand-primary group-hover:scale-110 transition-transform'
+                }`}>
+                  {video ? <Check className="w-4.5 h-4.5" /> : <Video className="w-4.5 h-4.5" />}
+                </div>
+                <span className="text-[11px] font-bold text-gray-700">{video ? 'Video Loaded' : 'Attach Video'}</span>
+                <span className="text-[9px] text-gray-400">{video ? 'Simulated.mp4' : 'Optional video clip'}</span>
+              </button>
+            </div>
+
+            {/* List of uploaded items */}
+            {(photos.length > 0 || video) && (
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100 mt-2">
+                {photos.map((ph, idx) => (
+                  <div key={idx} className="relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200 shrink-0">
+                    <img src={ph} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {URL.revokeObjectURL(ph);setPhotos(photos.filter((_, i) => i !== idx));setEvidenceFiles(evidenceFiles.filter((_,i)=>i!==idx));}}
+                      className="absolute top-0.5 right-0.5 bg-black/50 hover:bg-black text-white rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {video && (
+                  <div className="relative w-14 h-14 bg-gray-800 rounded-lg flex items-center justify-center text-white text-[9px] font-mono border border-gray-700 shrink-0">
+                    <span>VIDEO</span>
+                    <button
+                      type="button"
+                      onClick={() => setVideo(undefined)}
+                      className="absolute top-0.5 right-0.5 bg-black/50 hover:bg-black text-white rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* GPS Simulator */}
+          <div className="space-y-3 bg-gray-50/50 border border-gray-200/60 p-5 rounded-2xl flex flex-col justify-between">
+            <div>
+              <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <Compass className="w-4 h-4 text-brand-primary" />
+                <span>GPS Location Tagging</span>
+              </h3>
+              <p className="text-[11px] text-gray-400 leading-relaxed">
+                Smartphones auto-tag reports with GPS to direct drivers immediately. Click the button to fetch and lock coordinates.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white border border-gray-200/60 p-3 rounded-xl mt-2">
+              <div className="flex-1 min-w-0">
+                {gps ? (
+                  <div className="font-mono text-xs text-brand-primary font-bold">
+                    <span>Latitude: {gps.lat}</span>
+                    <span className="mx-2 text-gray-300">|</span>
+                    <span>Longitude: {gps.lng}</span>
+                  </div>
+                ) : (
+                  <div className="text-gray-400 text-xs italic flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-300 animate-pulse" />
+                    No coordinates locked.
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleDetectGPS}
+                disabled={isDetectingGps}
+                className="bg-brand-accent/30 hover:bg-brand-accent/50 text-brand-primary font-bold text-xs px-3.5 py-2.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0"
+              >
+                <Compass className={`w-3.5 h-3.5 ${isDetectingGps ? 'animate-spin' : ''}`} />
+                <span>{isDetectingGps ? 'Detecting...' : gps ? 'Re-detect GPS' : 'Lock GPS Location'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Buttons / Actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 pt-6 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-xs font-bold text-gray-500 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 border border-gray-200 py-3 px-5 rounded-xl transition-all cursor-pointer"
+          >
+            Cancel Report
+          </button>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              className="text-xs font-bold text-brand-primary hover:text-brand-success bg-brand-accent/15 hover:bg-brand-accent/30 border border-brand-accent/30 py-3 px-5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>Save Draft</span>
+              {draftSaved && <span className="text-[10px] bg-brand-success text-white px-1.5 py-0.5 rounded font-mono">Saved</span>}
+            </button>
+
+            <button
+              type="submit"
+              className="text-xs font-bold text-white bg-brand-primary hover:bg-brand-secondary py-3 px-7 rounded-xl transition-all shadow-md shadow-brand-primary/10 cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Submit Waste Report</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
