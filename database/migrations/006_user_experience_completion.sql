@@ -23,9 +23,9 @@ CREATE TABLE IF NOT EXISTS user_preferences (
 ) ENGINE=InnoDB;
 
 ALTER TABLE uploads
-  ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP NULL,
-  ADD COLUMN IF NOT EXISTS replaced_by BIGINT UNSIGNED NULL,
-  ADD INDEX IF NOT EXISTS uploads_active_owner(owner_user_id,deleted_at,purpose);
+  ADD COLUMN deleted_at TIMESTAMP NULL,
+  ADD COLUMN replaced_by BIGINT UNSIGNED NULL,
+  ADD INDEX uploads_active_owner(owner_user_id,deleted_at,purpose);
 
 INSERT IGNORE INTO user_profiles(user_id) SELECT id FROM users;
 INSERT IGNORE INTO user_preferences(user_id) SELECT id FROM users;
