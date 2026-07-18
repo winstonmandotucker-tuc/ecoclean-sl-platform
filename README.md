@@ -136,6 +136,12 @@ ECOCLEAN may deploy the complete platform to its own Linux, Windows/XAMPP-compat
 
 The local fallback map is available at `/assets/map-tile.svg`; production should set `VITE_MAP_TILE_URL` to the ECOCLEAN tile service. Operational GIS records always remain in MariaDB.
 
+## Vercel frontend deployment
+
+The private GitHub repository is prepared for Vercel deployment through `vercel.json`. Import `winstonmandotucker-tuc/ecoclean-sl-platform` into Vercel with the Vite preset; Vercel will run the locked pnpm installation, build `dist`, provide HTTPS and redeploy from `main` automatically.
+
+Vercel hosts the React frontend only in the recommended production topology. Before enabling authenticated workflows, configure `VITE_API_URL` in Vercel to the public HTTPS address of the separately hosted Express API. The MariaDB database, uploads, backup jobs, notification workers and operational services remain on ECOCLEAN-controlled persistent infrastructure.
+
 ## Phase 2 status
 
 Completed: database foundation, migrations, role/permission seeding, real registration/login/logout/session restoration, password hashing and recovery tokens, protected API middleware, core REST endpoints, environment separation, and frontend authentication migration.
