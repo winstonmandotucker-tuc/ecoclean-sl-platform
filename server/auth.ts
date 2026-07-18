@@ -25,13 +25,17 @@ export const issueSession = async (request:Request,response: Response, user: Aut
   response.cookie('ecoclean_session', token, {
     httpOnly: true,
     secure: config.cookieSecure,
-    sameSite: 'strict',
+    sameSite: config.cookieSecure ? 'none' : 'strict',
     path: '/',
     maxAge: remember ? maxAge : undefined,
   });
 };
 
-export const clearSession = (response: Response) => response.clearCookie('ecoclean_session', { path: '/' });
+export const clearSession = (response: Response) => response.clearCookie('ecoclean_session', {
+  path: '/',
+  secure: config.cookieSecure,
+  sameSite: config.cookieSecure ? 'none' : 'strict',
+});
 
 export async function authenticate(request: Request, response: Response, next: NextFunction) {
   try {

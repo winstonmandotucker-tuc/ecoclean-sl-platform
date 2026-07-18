@@ -11,7 +11,7 @@ const required = (name: string, fallback?: string) => {
 
 export const config = {
   env: process.env.NODE_ENV || 'development',
-  port: Number(process.env.API_PORT || 4000),
+  port: Number(process.env.API_PORT || process.env.PORT || 4000),
   frontendUrl: process.env.FRONTEND_URL || 'http://127.0.0.1:3000',
   jwtSecret: required('JWT_SECRET', 'development-only-change-before-deployment'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '8h',
