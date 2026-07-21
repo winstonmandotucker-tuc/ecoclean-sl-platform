@@ -61,10 +61,11 @@ export default function AuthScreens({
     { label: 'Supervisor', email: 'supervisor@ecoclean.sl', role: 'supervisor' as const },
     { label: 'Admin', email: 'admin@ecoclean.sl', role: 'admin' as const },
   ];
+  const quickLoginEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_QUICK_LOGIN === 'true';
 
   const handleQuickFill = (demoEmail: string) => {
     setEmail(demoEmail);
-    setPassword(import.meta.env.VITE_DEMO_PASSWORD || '');
+    if (import.meta.env.VITE_DEMO_PASSWORD) setPassword(import.meta.env.VITE_DEMO_PASSWORD);
     setErrorMsg('');
   };
 
@@ -236,13 +237,13 @@ export default function AuthScreens({
               </p>
               
               {/* Quick instructions */}
-              {import.meta.env.DEV && <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-6">
+              {quickLoginEnabled && <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-6">
                 <p className="text-xs text-brand-accent font-semibold mb-2 flex items-center gap-1.5">
                   <UserCheck className="w-3.5 h-3.5" />
-                  <span>Development Accounts Available</span>
+                  <span>Test Accounts Available</span>
                 </p>
                 <p className="text-[11px] text-emerald-100/60 leading-relaxed">
-                  Select a seeded role below to populate its credentials and securely authenticate against the application database.
+                  Select a seeded role below to populate its email. Enter the authorized account password to authenticate against Railway MariaDB.
                 </p>
               </div>}
             </div>
@@ -424,8 +425,9 @@ export default function AuthScreens({
                 </div>
 
                 {/* Demo account helper row */}
-                {import.meta.env.DEV && <div className="pt-6 border-t border-gray-100">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-3">Quick Login (Development Accounts)</p>
+                {quickLoginEnabled && <div className="pt-6 border-t border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-1">Quick Account Selector</p>
+                  <p className="text-[10px] text-gray-400 text-center mb-3">Select a role, then enter its authorized password.</p>
                   <div className="grid grid-cols-2 gap-2">
                     {demoAccounts.map((account) => (
                       <button
