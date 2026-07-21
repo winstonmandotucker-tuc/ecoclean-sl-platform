@@ -23,6 +23,15 @@ const passwordHash = await bcrypt.hash(demoPassword, 12);
 const users = [
   ['Samuel Koroma','citizen@ecoclean.sl','+23276000001','CITIZEN'],
   ['Abdul Kamara','staff@ecoclean.sl','+23276000002','STAFF'],
+  ['John Kallon','john@ecoclean.sl','+23276000005','STAFF'],
+  ['Mariama Bangura','mariama@ecoclean.sl','+23276000006','STAFF'],
+  ['Mohamed Sesay','mohamed@ecoclean.sl','+23276000007','STAFF'],
+  ['Fatmata Kamara','fatmata@ecoclean.sl','+23276000008','STAFF'],
+  ['Ibrahim Koroma','ibrahim@ecoclean.sl','+23276000009','STAFF'],
+  ['Hawa Conteh','hawa@ecoclean.sl','+23276000010','STAFF'],
+  ['Peter Kargbo','peter@ecoclean.sl','+23276000011','STAFF'],
+  ['Aminata Turay','aminata@ecoclean.sl','+23276000012','STAFF'],
+  ['Joseph Mansaray','joseph@ecoclean.sl','+23276000013','STAFF'],
   ['Regional Supervisor','supervisor@ecoclean.sl','+23276000003','SUPERVISOR'],
   ['Admin Director','admin@ecoclean.sl','+23276000004','ADMINISTRATOR'],
 ];
@@ -44,8 +53,8 @@ await pool.query(`INSERT INTO notifications(user_id,type,title,body,data_json)
   FROM users u WHERE NOT EXISTS(SELECT 1 FROM notifications n WHERE n.user_id=u.id AND n.type='welcome')`);
 await pool.query("INSERT INTO municipalities (name,code) VALUES ('Freetown City Council','FCC') ON DUPLICATE KEY UPDATE name=VALUES(name)");
 await pool.query("INSERT INTO districts (municipality_id,name,code) SELECT id,'Western Area Urban','WAU' FROM municipalities WHERE code='FCC' ON DUPLICATE KEY UPDATE name=VALUES(name),municipality_id=VALUES(municipality_id)");
-await pool.query("UPDATE users SET municipality_id=(SELECT id FROM municipalities WHERE code='FCC'),district_id=(SELECT id FROM districts WHERE code='WAU') WHERE email IN ('supervisor@ecoclean.sl','staff@ecoclean.sl')");
+await pool.query("UPDATE users u JOIN roles r ON r.id=u.role_id SET u.municipality_id=(SELECT id FROM municipalities WHERE code='FCC'),u.district_id=(SELECT id FROM districts WHERE code='WAU') WHERE r.code IN ('STAFF','SUPERVISOR')");
 await pool.query("INSERT INTO wards (district_id,name,code) SELECT id,'Central Freetown','FCC-CENTRAL' FROM districts WHERE code='WAU' ON DUPLICATE KEY UPDATE name=VALUES(name),district_id=VALUES(district_id)");
 await pool.query("INSERT INTO zones (ward_id,name,code) SELECT id,'Central Operations Zone','FCC-CENTRAL-01' FROM wards WHERE code='FCC-CENTRAL' ON DUPLICATE KEY UPDATE name=VALUES(name)");
-console.log('Seeded roles, permissions, geography, and four development accounts.');
+console.log('Seeded roles, permissions, geography, one citizen, ten staff, one supervisor, and one administrator.');
 await pool.end();

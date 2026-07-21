@@ -107,8 +107,8 @@ export default function StaffPortal({ user, onBackToSelection, onLogout }: Staff
   }, []);
 
   useEffect(()=>{void Promise.all([taskService.list(),notificationService.list()]).then(([taskResponse,notificationResponse])=>{
-    setTasks(taskResponse.data.map((row:any)=>({id:String(row.id),referenceNumber:row.reference,title:row.title,category:'Waste Operations',description:row.description||row.title,location:'Assigned GIS location',district:'Western Urban',municipality:'Freetown City Council (FCC)',ward:'Assigned ward',zone:'Assigned zone',priority:String(row.priority).replace(/^./,(c:string)=>c.toUpperCase()),status:String(row.status).split('_').map((part:string)=>part[0].toUpperCase()+part.slice(1)).join(' '),date:String(row.created_at||''),deadline:String(row.due_at||'No deadline'),photosBefore:[],photosAfter:[],gps:{lat:8.4842,lng:-13.2514,x:14,y:44},assignedSupervisor:'ECOCLEAN Supervisor',notes:[]})) as StaffTask[]);
-    setNotifications(notificationResponse.data.map((row:any)=>({id:String(row.id),title:row.title,body:row.body,date:String(row.created_at||''),type:'System Alert',read:Boolean(row.read_at),taskId:row.data_json?.taskId?String(row.data_json.taskId):undefined})) as StaffNotification[]);
+    setTasks(taskResponse.data.map((row:any)=>({id:String(row.id),reportId:row.report_id?String(row.report_id):undefined,referenceNumber:row.reference,title:row.title,category:'Waste Operations',description:row.description||row.title,location:'Assigned GIS location',district:'Western Urban',municipality:'Freetown City Council (FCC)',ward:'Assigned ward',zone:'Assigned zone',priority:String(row.priority).replace(/^./,(c:string)=>c.toUpperCase()),status:String(row.status).split('_').map((part:string)=>part[0].toUpperCase()+part.slice(1)).join(' '),date:String(row.created_at||''),deadline:String(row.due_at||'No deadline'),photosBefore:[],photosAfter:[],gps:{lat:8.4842,lng:-13.2514,x:14,y:44},assignedSupervisor:'ECOCLEAN Supervisor',notes:[]})) as StaffTask[]);
+    setNotifications(notificationResponse.data.map((row:any)=>({id:String(row.id),title:row.title,body:row.body,date:String(row.created_at||''),type:row.type==='supervisor_message'?'Supervisor Message':'System Alert',read:Boolean(row.read_at),taskId:row.data_json?.taskId?String(row.data_json.taskId):undefined,canReply:row.type==='supervisor_message'})) as StaffNotification[]);
   }).catch(error=>console.error('Staff operational data load failed',error));},[]);
 
   // Sync state helpers
@@ -547,6 +547,7 @@ export default function StaffPortal({ user, onBackToSelection, onLogout }: Staff
             onMarkAllRead={handleMarkAllRead}
             onDeleteNotification={handleDeleteNotification}
             onExecuteTask={handleExecuteTask}
+            onReply={(id)=>{const body=window.prompt('Reply to your Supervisor');if(body?.trim())void notificationService.reply(id,body.trim()).then(()=>alert('Reply sent to Supervisor.')).catch(error=>alert(error instanceof Error?error.message:'Reply failed.'));}}
           />
         )}
 

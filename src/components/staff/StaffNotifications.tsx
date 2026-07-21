@@ -11,6 +11,7 @@ interface StaffNotificationsProps {
   onMarkAllRead: () => void;
   onDeleteNotification: (id: string) => void;
   onExecuteTask: (taskId: string) => void;
+  onReply: (notificationId:string) => void;
 }
 
 export default function StaffNotifications({
@@ -18,7 +19,8 @@ export default function StaffNotifications({
   onMarkRead,
   onMarkAllRead,
   onDeleteNotification,
-  onExecuteTask
+  onExecuteTask,
+  onReply
 }: StaffNotificationsProps) {
   const [activeFilter, setActiveFilter] = useState<'All' | 'Unread'>('All');
 
@@ -178,6 +180,7 @@ export default function StaffNotifications({
                     </button>
                   </div>
                 )}
+                {notif.canReply&&<button onClick={()=>onReply(notif.id)} className="mt-2 bg-teal-50 hover:bg-teal-100 text-teal-700 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-teal-100 transition-all flex items-center gap-1"><MessageSquare className="w-3 h-3"/>Reply to Supervisor</button>}
               </div>
 
               {/* Right Action panel */}

@@ -185,6 +185,7 @@ Production is **not certified** because real email/SMS/push credentials are abse
 
 ## Change log
 
+- 21 July 2026 — hardened mobile report intake, durable media, and operational communication. GPS-denied phones can submit using written landmarks plus an approximate district point; new uploads persist in MariaDB; assigned Citizens and Staff can communicate until completion; Staff can reply to direct Supervisor messages; ten Staff accounts are seeded; and Staff identity self-editing is blocked. Validation evidence is in [docs/MOBILE_MEDIA_COMMUNICATION_VALIDATION.md](docs/MOBILE_MEDIA_COMMUNICATION_VALIDATION.md).
 - 21 July 2026 — corrected silent submit failures across Citizen reports and support, Staff task/evidence operations, Supervisor assignments/messages/verification, and Administrator users/reports/settings/broadcasts. Valid Sierra Leone district UI labels now resolve to canonical MariaDB scope, GPS uses device coordinates, and operational actions wait for API confirmation before showing success. Validation evidence is in [docs/FUNCTIONALITY_CORRECTION_REPORT.md](docs/FUNCTIONALITY_CORRECTION_REPORT.md).
 
 ## Authenticated dashboard identity status

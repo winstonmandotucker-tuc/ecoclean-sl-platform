@@ -33,6 +33,10 @@ export const reportService = {
   update: (id:number|string,payload:unknown) => api<{message:string}>(`/reports/${id}`,{method:'PATCH',body:JSON.stringify(payload)}),
   remove: (id:number|string) => api<void>(`/reports/${id}`,{method:'DELETE'}),
 };
+export const reportConversationService={
+  get:(reportId:number|string)=>api<{data:{conversationId:number;messages:any[];closed:boolean}}>(`/reports/${reportId}/conversation`),
+  send:(reportId:number|string,body:string)=>api<{data:any}>(`/reports/${reportId}/messages`,{method:'POST',body:JSON.stringify({body})}),
+};
 export type ReportExportFormat='csv'|'pdf'|'xlsx'|'docx'|'json'|'geojson';
 export const reportExportService={download:(format:ReportExportFormat,filters:{dateRange?:string;status?:string;priority?:string}={})=>{const query=new URLSearchParams({format,...Object.fromEntries(Object.entries(filters).filter(([,value])=>value&&value!=='All')) as Record<string,string>});return downloadApi(`/reports/export-professional?${query}`);}};
 export const taskService = {
@@ -41,12 +45,13 @@ export const taskService = {
   create: (payload:unknown) => api<{data:any}>('/tasks-operational',{method:'POST',body:JSON.stringify(payload)}),
   update: (id:number|string,payload:unknown) => api<{message:string}>(`/tasks/${id}`,{method:'PATCH',body:JSON.stringify(payload)}),
 };
-export const staffDirectoryService={list:()=>api<{data:any[]}>('/staff-directory')};
+export const staffDirectoryService={list:()=>api<{data:any[]}>('/staff-directory'),update:(id:number|string,payload:unknown)=>api<void>(`/staff-directory/${id}`,{method:'PATCH',body:JSON.stringify(payload)})};
 export const notificationService = {
   list: () => api<{data:any[]}>('/notifications'),
   markRead: (id:number) => api<void>(`/notifications/${id}/read`,{method:'PATCH'}),
   markAllRead: () => api<void>('/notifications/mark-all-read',{method:'POST'}),
   remove: (id:number|string) => api<void>(`/notifications/${id}`,{method:'DELETE'}),
+  reply: (id:number|string,body:string) => api<{data:any}>(`/notifications/${id}/reply`,{method:'POST',body:JSON.stringify({body})}),
 };
 export const supportService = {
   listTickets: () => api<{data:any[]}>('/support/tickets-scoped'),

@@ -1,5 +1,6 @@
 export interface StaffTask {
   id: string;
+  reportId?: string;
   referenceNumber: string;
   title: string;
   category: string;
@@ -42,6 +43,7 @@ export interface StaffNotification {
   type: 'New Assignment' | 'Supervisor Message' | 'System Alert' | 'Environmental Alert' | 'Schedule Update';
   read: boolean;
   taskId?: string;
+  canReply?: boolean;
 }
 
 export interface StaffPerformance {

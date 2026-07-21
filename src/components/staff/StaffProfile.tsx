@@ -3,7 +3,7 @@ import {
   User, Shield, ShieldCheck, Mail, Phone, Truck, MapPin, Sliders, LogOut, 
   Lock, Settings, Bell, RefreshCw, CheckCircle2, Award 
 } from 'lucide-react';
-import ProfilePhotoControl from '../ProfilePhotoControl';
+import AuthenticatedAvatar from '../AuthenticatedAvatar';
 import { profileService } from '../../lib/services';
 
 interface StaffProfileProps {
@@ -36,15 +36,8 @@ export default function StaffProfile({
     e.preventDefault();
     setSaving(true);
     try {
-      await profileService.update({fullName,phone,email});
-      onUpdateUser({
-        ...user,
-        fullName,
-        phone,
-        email
-      });
-      alert('Operational profile parameters updated successfully!');
       await profileService.preferences({theme:'system',language:'en',notificationPreferences:{smsDispatches,emailSummaries},gisPreferences:{geoTracking},dashboardPreferences:{}});
+      alert('Operator preferences updated successfully. Identity details are managed by your Supervisor or Administrator.');
     } catch(error:any){alert(error?.message||'Profile update failed.');} finally {setSaving(false);}
   };
 
@@ -66,7 +59,7 @@ export default function StaffProfile({
           <div className="bg-white border border-gray-200/80 rounded-3xl p-6 shadow-sm text-center space-y-4">
             
             {/* Operator Avatar circle */}
-            <ProfilePhotoControl fullName={fullName}/>
+            <div className="flex justify-center"><AuthenticatedAvatar user={user} className="w-24 h-24" textClassName="text-3xl"/></div>
 
             <div>
               <h3 className="text-base font-extrabold text-gray-900 truncate leading-snug">{fullName}</h3>
@@ -140,9 +133,9 @@ export default function StaffProfile({
                 <input
                   type="text"
                   required
+                  disabled
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3.5 text-xs focus:outline-none focus:bg-white focus:border-brand-primary text-gray-800"
+                  className="w-full bg-gray-100 border border-gray-200 rounded-xl py-2.5 px-3.5 text-xs text-gray-500 cursor-not-allowed"
                 />
               </div>
 
@@ -151,9 +144,9 @@ export default function StaffProfile({
                 <input
                   type="text"
                   required
+                  disabled
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3.5 text-xs focus:outline-none focus:bg-white focus:border-brand-primary text-gray-800"
+                  className="w-full bg-gray-100 border border-gray-200 rounded-xl py-2.5 px-3.5 text-xs text-gray-500 cursor-not-allowed"
                 />
               </div>
 
@@ -162,9 +155,9 @@ export default function StaffProfile({
                 <input
                   type="email"
                   required
+                  disabled
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3.5 text-xs focus:outline-none focus:bg-white focus:border-brand-primary text-gray-800"
+                  className="w-full bg-gray-100 border border-gray-200 rounded-xl py-2.5 px-3.5 text-xs text-gray-500 cursor-not-allowed"
                 />
               </div>
 
@@ -189,7 +182,8 @@ export default function StaffProfile({
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-100 flex justify-end">
+            <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <p className="text-[11px] font-semibold text-amber-700">Identity and profile-photo changes require a Supervisor or Administrator.</p>
               <button
                 type="submit"
                 disabled={saving}
@@ -203,7 +197,7 @@ export default function StaffProfile({
                 ) : (
                   <>
                     <Shield className="w-3.5 h-3.5" />
-                    <span>Update Registry Parameters</span>
+                    <span>Save Operator Preferences</span>
                   </>
                 )}
               </button>

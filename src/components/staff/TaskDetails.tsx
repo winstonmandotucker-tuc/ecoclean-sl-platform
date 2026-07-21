@@ -4,6 +4,7 @@ import {
   ChevronRight, Play, CheckCircle2, AlertTriangle, FileText, Camera, RefreshCw 
 } from 'lucide-react';
 import { StaffTask } from '../../lib/staffData';
+import ReportConversation from '../ReportConversation';
 
 interface TaskDetailsProps {
   task: StaffTask | null;
@@ -211,6 +212,8 @@ export default function TaskDetails({
               )}
             </div>
           </div>
+
+          {task.reportId&&<ReportConversation reportId={task.reportId}/>}
 
         </div>
 

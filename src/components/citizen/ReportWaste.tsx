@@ -3,6 +3,15 @@ import { operationalStore } from '../../lib/operationalStore';
 import { MapPin, Camera, Images, Send, FileText, X, Compass } from 'lucide-react';
 import { DISTRICTS, MUNICIPALITIES, WASTE_CATEGORIES, PRIORITIES, Report, GPSCoordinates } from '../../lib/citizenData';
 
+const DISTRICT_CENTROIDS: Record<string, GPSCoordinates> = {
+  'Bo District':{lat:7.9647,lng:-11.7383},'Bombali District':{lat:9.1250,lng:-12.0500},'Bonthe District':{lat:7.5328,lng:-12.5019},
+  'Falaba District':{lat:9.7250,lng:-11.1750},'Kailahun District':{lat:8.2789,lng:-10.5730},'Kambia District':{lat:9.1250,lng:-12.9180},
+  'Karene District':{lat:9.5000,lng:-12.2500},'Kenema District':{lat:7.8767,lng:-11.1875},'Koinadugu District':{lat:9.5000,lng:-11.5000},
+  'Kono District':{lat:8.6439,lng:-10.9717},'Moyamba District':{lat:8.1586,lng:-12.4317},'Port Loko District':{lat:8.7661,lng:-12.7869},
+  'Pujehun District':{lat:7.3581,lng:-11.7208},'Tonkolili District':{lat:8.6667,lng:-11.6667},
+  'Western Area Urban':{lat:8.4840,lng:-13.2299},'Western Area Rural':{lat:8.3389,lng:-13.0714}
+};
+
 interface ReportWasteProps {
   onSubmit: (report: Omit<Report, 'id' | 'referenceNumber' | 'status' | 'date'> & {evidenceFiles?:File[]}) => Promise<void>;
   onCancel: () => void;
@@ -42,9 +51,9 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
   // Capture the citizen's real browser/device coordinates.
   const handleDetectGPS = () => {
     setGpsError('');
-    if(!navigator.geolocation){setGpsError('Location services are not supported on this device.');return;}
+    if(!navigator.geolocation){setGpsError('Device GPS is unavailable. Your report will use an approximate district map point together with your written address.');return;}
     setIsDetectingGps(true);
-    navigator.geolocation.getCurrentPosition(position=>{setGps({lat:Number(position.coords.latitude.toFixed(6)),lng:Number(position.coords.longitude.toFixed(6))});setIsDetectingGps(false);},()=>{setGpsError('Location permission was denied or the position is unavailable. You may still submit the written address.');setIsDetectingGps(false);},{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+    navigator.geolocation.getCurrentPosition(position=>{setGps({lat:Number(position.coords.latitude.toFixed(6)),lng:Number(position.coords.longitude.toFixed(6))});setIsDetectingGps(false);},()=>{setGpsError('Device GPS permission is unavailable. Submission remains enabled and will use an approximate district map point plus your written street or landmark.');setIsDetectingGps(false);},{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
   };
 
   const handlePhotoUpload = (files:FileList|null) => {if(!files)return;const accepted=Array.from(files).filter(file=>['image/jpeg','image/png','image/webp'].includes(file.type)&&file.size<=8*1024*1024).slice(0,5-evidenceFiles.length);setEvidenceFiles(current=>[...current,...accepted]);setPhotos(current=>[...current,...accepted.map(file=>URL.createObjectURL(file))]);};
@@ -96,7 +105,10 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
       setSubmitError('Add a title, a description, and the waste location before submitting.');
       return;
     }
-    if(!gps){setSubmitError('Lock your current GPS location before submitting so the assigned crew receives real coordinates.');return;}
+    // Mobile browsers may deny geolocation even when the written address is valid.
+    // In that case store an explicitly approximate district map point; crews use the
+    // submitted street/landmark as the authoritative pickup location.
+    const effectiveGps=gps||DISTRICT_CENTROIDS[district]||DISTRICT_CENTROIDS['Western Area Urban'];
 
     setIsSubmitting(true);
     try {
@@ -111,7 +123,7 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
         zone,
         priority,
         photos: photos.length > 0 ? photos : ['/assets/demo-waste.svg'],
-        gps,
+        gps:effectiveGps,
         evidenceFiles
       });
       // A draft is removed only after MariaDB and any evidence uploads confirm success.
@@ -362,7 +374,7 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
                 <span>GPS Location Tagging</span>
               </h3>
               <p className="text-[11px] text-gray-400 leading-relaxed">
-                Smartphones auto-tag reports with GPS to direct drivers immediately. Click the button to fetch and lock coordinates.
+                Use device GPS when available. If permission is unavailable, submission remains enabled with your written landmark and an approximate district map point.
               </p>
             </div>
 

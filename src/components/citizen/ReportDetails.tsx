@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, MapPin, Calendar, Clock, ShieldCheck, Compass, CheckCircle2, RefreshCw, AlertTriangle, User, Trash2, Download } from 'lucide-react';
 import { Report } from '../../lib/citizenData';
+import ReportConversation from '../ReportConversation';
 
 interface ReportDetailsProps {
   report: Report;
@@ -188,6 +189,7 @@ export default function ReportDetails({ report, onBack, onDelete }: ReportDetail
 
         {/* Right 1 Column: Incident Stepper Progress Timeline */}
         <div className="space-y-6">
+          {report.status!=='Pending'&&<ReportConversation reportId={report.id}/>}
           <div className="bg-white rounded-3xl border border-gray-200/80 p-6 shadow-sm space-y-6">
             <div>
               <h3 className="text-sm font-extrabold text-gray-900">Resolution Progress</h3>
