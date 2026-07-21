@@ -57,14 +57,14 @@ Passwords use bcrypt. Authenticated sessions use signed JWTs and HttpOnly cookie
 
 ## Repository and deployment status
 
-Repository: `winstonmandotucker-tuc/ecoclean-sl-platform` (private target). Existing remote branches are `main` and `develop`; the existing release tag is `v1.0.0-rc.1`. The final commit/push hash and post-push deployment evidence are added to the GitHub push report after publishing.
+Repository: `winstonmandotucker-tuc/ecoclean-sl-platform` (private target). Commit `ee2c5f37b13e48e750a3453236d59d3e0a5668be` was pushed successfully to both `main` and `develop`. The existing annotated release tag `v1.0.0-rc.1` was preserved without rewriting published history.
 
 Existing production endpoints responded before this release was pushed:
 
 - Vercel frontend: `https://ecoclean-sl-platform.vercel.app/` — HTTP 200.
 - Railway API: `https://ecoclean-sl-platform-production.up.railway.app/api/health` — HTTP 200, database connected, production environment.
 
-These responses prove the existing deployments are alive, not that this new release has deployed. Post-push commit/deployment matching must be verified separately.
+Post-push verification confirmed that Vercel refreshed on 21 July 2026 and Railway exposed the newly added authenticated route. Production acceptance then passed: Citizen authentication/profile 200, report `ECO-2026-484709` created 201, image evidence upload `15` created 201, district staff directory 200, task `TASK-2026-213831` created 201, notifications returned 200, and native Excel returned 200 with the correct OpenXML content type and ZIP signature.
 
 ## External blockers
 
