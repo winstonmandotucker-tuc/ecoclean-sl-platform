@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Download, FileText, CheckCircle2, RefreshCw, Calendar, Database, ShieldAlert } from 'lucide-react';
 import { CountryConfig, COUNTRIES } from '../../lib/adminData';
-import { reportExportService } from '../../lib/services';
+import { reportExportService, type ReportExportFormat } from '../../lib/services';
 
 interface DataExportSimulationProps {
   country: CountryConfig;
@@ -9,7 +9,7 @@ interface DataExportSimulationProps {
 
 export default function DataExportSimulation({ country }: DataExportSimulationProps) {
   const [dataset, setDataset] = useState('reports');
-  const [format, setFormat] = useState<'csv'|'pdf'|'json'|'geojson'>('csv');
+  const [format, setFormat] = useState<ReportExportFormat>('pdf');
   const [dateRange, setDateRange] = useState('all');
   const [exporting, setExporting] = useState(false);
   const [exportResult, setExportResult] = useState<string | null>(null);
@@ -66,8 +66,10 @@ export default function DataExportSimulation({ country }: DataExportSimulationPr
                   onChange={e => setFormat(e.target.value as typeof format)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:border-brand-primary focus:bg-white"
                 >
-                  <option value="csv">Excel-Compatible CSV Spreadsheet</option>
-                  <option value="pdf">PDF Incident Register</option>
+                  <option value="pdf">Professional PDF Incident Register</option>
+                  <option value="xlsx">Formatted Microsoft Excel Workbook (.xlsx)</option>
+                  <option value="docx">Branded Microsoft Word Document (.docx)</option>
+                  <option value="csv">CSV Data File</option>
                   <option value="json">JSON Structured Schema Document</option>
                   <option value="geojson">GeoJSON GIS Feature Collection</option>
                 </select>

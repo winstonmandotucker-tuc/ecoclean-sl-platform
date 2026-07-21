@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { Report, WASTE_CATEGORIES, DISTRICTS } from '../../lib/citizenData';
 import { FieldStaff } from '../../lib/supervisorData';
-import { reportExportService } from '../../lib/services';
+import { reportExportService, type ReportExportFormat } from '../../lib/services';
 
 interface ReportReviewCenterProps {
   reports: Report[];
@@ -31,7 +31,7 @@ export default function ReportReviewCenter({
   const [fuelAllocation, setFuelAllocation] = useState<string>('15 Liters');
   const [assignmentSuccess, setAssignmentSuccess] = useState<boolean>(false);
   const [exporting,setExporting]=useState<string|null>(null);
-  const exportReports=async(format:'csv'|'pdf')=>{setExporting(format);try{await reportExportService.download(format,{priority:filterPriority==='All'?undefined:filterPriority});}finally{setExporting(null);}};
+  const exportReports=async(format:ReportExportFormat)=>{setExporting(format);try{await reportExportService.download(format,{priority:filterPriority==='All'?undefined:filterPriority});}finally{setExporting(null);}};
 
   // Filtered reports calculation
   const filteredReports = reports.filter(r => {
@@ -109,8 +109,7 @@ export default function ReportReviewCenter({
           <p className="text-xs text-gray-500 mt-0.5">Filter, audit, and dispatch collection crews to reported hot-spots</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button disabled={!!exporting} onClick={()=>void exportReports('csv')} className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 flex items-center gap-1.5 disabled:opacity-50"><Download className="w-3.5 h-3.5"/>{exporting==='csv'?'Exporting…':'Excel CSV'}</button>
-          <button disabled={!!exporting} onClick={()=>void exportReports('pdf')} className="px-3 py-1.5 bg-brand-primary text-white rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"><Download className="w-3.5 h-3.5"/>{exporting==='pdf'?'Exporting…':'PDF'}</button>
+          <select disabled={!!exporting} defaultValue="" onChange={event=>{const format=event.target.value as ReportExportFormat;if(format)void exportReports(format);event.currentTarget.value='';}} className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 disabled:opacity-50"><option value="" disabled>{exporting?'Preparing export…':'Export reports'}</option><option value="pdf">Professional PDF</option><option value="xlsx">Microsoft Excel (.xlsx)</option><option value="docx">Microsoft Word (.docx)</option><option value="csv">CSV data</option><option value="json">JSON data</option><option value="geojson">GeoJSON map data</option></select>
           {/* Active stats */}
           <span className="px-3 py-1 bg-white border border-gray-150 rounded-lg text-xs font-mono font-bold text-gray-500">
             Total: <span className="text-gray-900">{filteredReports.length}</span>

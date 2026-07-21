@@ -191,7 +191,7 @@ All role dashboards and identity capsules now display the real authenticated pro
 
 ## Report export status
 
-Supervisors, Administrators and National Administrators can export real MariaDB incident reports as Excel-compatible CSV, PDF, JSON or GeoJSON. Export controls are available in the existing Report Review, Incident Registry and Data Extraction screens. Citizens and Staff are denied; Supervisor exports are restricted to the configured municipality/district; every successful export is recorded in `audit_logs`.
+Supervisors and Administrators can export real MariaDB incident reports as branded PDF, native formatted Excel (`.xlsx`), native branded Word (`.docx`), CSV, JSON, or GeoJSON. The document formats include an ECOCLEAN SL letterhead, report metadata, bordered tables, authorization areas, and official footers. Citizens and Staff are denied; Supervisor exports are restricted to the configured municipality/district; every successful export is recorded in `audit_logs`.
 
 ## Final local hardening status
 
@@ -220,3 +220,13 @@ Known Phase 4.5 limitations: real provider delivery, ClamAV, authoritative GIS b
 - Phase 5: completed local load/security/restore validation, hardened error and CORS handling, added portable XAMPP backup paths and deployment templates, and issued an evidence-based non-certification pending external integrations and host validation.
 - Phase 4.5: completed normalized profile/settings/media workflows and evidence-backed five-role persistence validation without changing the existing visual design.
 - Phase 5 certification: added strict production scan gating and the 10k/25k/50k load profile; completed a zero-failure 85k request run and isolated restore rehearsal; issued an evidence-based non-certification for unresolved external infrastructure gates.
+
+## July 2026 operational completion update
+
+The active platform scope is Sierra Leone only, with four roles: Citizen, Staff, Supervisor, and Administrator. National Administrator access and seed data have been removed. The operational geography now contains all 16 current Sierra Leone districts and their district/city councils.
+
+Citizen waste reports support two explicit evidence paths without changing the visual design: take a new rear-camera photograph or select up to five JPEG, PNG, or WebP images from the device gallery. Staff must likewise submit at least one camera/gallery completion image before a task moves to verification pending; only a Supervisor or Administrator may verify closure.
+
+Report intake, district-scoped report visibility, staff directory lookup, supervisor assignment, notifications, ticket visibility, and conversation replies now use MariaDB-backed APIs. Staff can see reports in their jurisdiction but cannot act until assigned. Supervisor/Admin task assignment validates jurisdiction, prevents duplicate active tasks, notifies the staff member and citizen, and writes an audit event.
+
+Latest measured validation: TypeScript passed, the Vite production build passed, and all 7 live API integration tests passed. A controlled citizen workflow stored report `ECO-2026-241441`, persisted one image upload, and created assigned task `TASK-2026-557301` for the district staff account. Apache, MariaDB, API, and frontend remain active locally.

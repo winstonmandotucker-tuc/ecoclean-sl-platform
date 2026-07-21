@@ -27,19 +27,21 @@ export const uploadService = {
 };
 
 export const reportService = {
-  list: () => api<{data:any[]}>('/reports'),
+  list: () => api<{data:any[]}>('/reports-scoped'),
   get: (id:number|string) => api<{data:any}>(`/reports/${id}`),
-  create: (payload:unknown) => api<{data:any}>('/reports',{method:'POST',body:JSON.stringify(payload)}),
+  create: (payload:unknown) => api<{data:any}>('/reports-operational',{method:'POST',body:JSON.stringify(payload)}),
   update: (id:number|string,payload:unknown) => api<{message:string}>(`/reports/${id}`,{method:'PATCH',body:JSON.stringify(payload)}),
   remove: (id:number|string) => api<void>(`/reports/${id}`,{method:'DELETE'}),
 };
-export const reportExportService={download:(format:'csv'|'pdf'|'json'|'geojson',filters:{dateRange?:string;status?:string;priority?:string}={})=>{const query=new URLSearchParams({format,...Object.fromEntries(Object.entries(filters).filter(([,value])=>value&&value!=='All')) as Record<string,string>});return downloadApi(`/reports/export?${query}`);}};
+export type ReportExportFormat='csv'|'pdf'|'xlsx'|'docx'|'json'|'geojson';
+export const reportExportService={download:(format:ReportExportFormat,filters:{dateRange?:string;status?:string;priority?:string}={})=>{const query=new URLSearchParams({format,...Object.fromEntries(Object.entries(filters).filter(([,value])=>value&&value!=='All')) as Record<string,string>});return downloadApi(`/reports/export-professional?${query}`);}};
 export const taskService = {
   list: () => api<{data:any[]}>('/tasks'),
   get: (id:number|string) => api<{data:any}>(`/tasks/${id}`),
-  create: (payload:unknown) => api<{data:any}>('/tasks',{method:'POST',body:JSON.stringify(payload)}),
+  create: (payload:unknown) => api<{data:any}>('/tasks-operational',{method:'POST',body:JSON.stringify(payload)}),
   update: (id:number|string,payload:unknown) => api<{message:string}>(`/tasks/${id}`,{method:'PATCH',body:JSON.stringify(payload)}),
 };
+export const staffDirectoryService={list:()=>api<{data:any[]}>('/staff-directory')};
 export const notificationService = {
   list: () => api<{data:any[]}>('/notifications'),
   markRead: (id:number) => api<void>(`/notifications/${id}/read`,{method:'PATCH'}),
@@ -47,12 +49,12 @@ export const notificationService = {
   remove: (id:number|string) => api<void>(`/notifications/${id}`,{method:'DELETE'}),
 };
 export const supportService = {
-  listTickets: () => api<{data:any[]}>('/support/tickets'),
+  listTickets: () => api<{data:any[]}>('/support/tickets-scoped'),
   metrics: () => api<{data:any}>('/support/metrics'),
-  createTicket: (payload:unknown) => api<{data:any}>('/support/tickets',{method:'POST',body:JSON.stringify(payload)}),
+  createTicket: (payload:unknown) => api<{data:any}>('/support/tickets-operational',{method:'POST',body:JSON.stringify(payload)}),
   updateTicket: (id:number|string,payload:unknown) => api<{message:string}>(`/support/tickets/${id}`,{method:'PATCH',body:JSON.stringify(payload)}),
   messages: (conversationId:number|string) => api<{data:any[]}>(`/support/conversations/${conversationId}/messages`),
-  sendMessage: (conversationId:number|string,body:string) => api<{data:any}>(`/support/conversations/${conversationId}/messages`,{method:'POST',body:JSON.stringify({body})}),
+  sendMessage: (conversationId:number|string,body:string) => api<{data:any}>(`/support/conversations/${conversationId}/messages-operational`,{method:'POST',body:JSON.stringify({body})}),
   closeTicket: (id:number|string) => api<void>(`/support/tickets/${id}/close`,{method:'POST'}),
 };
 export const dashboardService = { get: () => api<{data:any}>('/dashboard') };

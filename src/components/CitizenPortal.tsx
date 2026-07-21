@@ -190,7 +190,18 @@ export default function CitizenPortal({ user, onBackToSelection, onLogout }: Cit
 
   // 1. Submit Waste Report Action
   const handleSubmitReport = async (reportData: Omit<Report, 'id' | 'referenceNumber' | 'status' | 'date'>) => {
-    const {data}=await reportService.create({title:reportData.title,description:reportData.description,category:reportData.category,latitude:reportData.gps.lat,longitude:reportData.gps.lng,address:reportData.location});
+    const {data}=await reportService.create({
+      title:reportData.title,
+      description:reportData.description,
+      category:reportData.category,
+      latitude:reportData.gps.lat,
+      longitude:reportData.gps.lng,
+      address:reportData.location,
+      districtName:reportData.district,
+      municipalityName:reportData.municipality,
+      wardName:reportData.ward,
+      zoneName:reportData.zone,
+    });
     const evidenceFiles:File[]=(reportData as any).evidenceFiles||[];const persistedPhotos:string[]=[];for(const file of evidenceFiles){const uploaded=await uploadService.upload('report_evidence',file,{reportId:data.id});const url=mediaUrl(uploaded.data[0].url);if(url)persistedPhotos.push(url);}
     const randomRefNum = data.reference;
     const randomId = String(data.id);
@@ -542,7 +553,7 @@ export default function CitizenPortal({ user, onBackToSelection, onLogout }: Cit
 
             {/* Micro Time Indicator clock */}
             <div className="text-[10px] font-mono text-gray-400 font-semibold">
-              TIME STATUS: 2026-07-16 10:24 UTC
+              TIME STATUS: {new Date().toLocaleString('en-SL',{timeZone:'Africa/Freetown',hour12:false})} GMT
             </div>
           </div>
 

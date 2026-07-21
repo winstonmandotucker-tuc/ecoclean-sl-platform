@@ -16,12 +16,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "node --input-type=module -e \"import fs from 'node:fs'; fs.rmSync('dist',{recursive:true,force:true}); fs.rmSync('server.js',{force:true});\"",
-    "lint": "tsc --noEmit"
-    ,"test": "tsx --test tests/**/*.test.ts",
+    "lint": "tsc --noEmit",
+    "test": "tsx --test tests/**/*.test.ts",
     "test:load": "tsx tests/loadTest.ts",
     "test:load:certification": "tsx tests/loadTest.ts --certification",
-    "test:security": "tsx tests/securityValidation.ts"
-    ,"test:ux": "tsx tests/userExperienceValidation.ts"
+    "test:security": "tsx tests/securityValidation.ts",
+    "test:ux": "tsx tests/userExperienceValidation.ts"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.2.8",
@@ -30,7 +30,9 @@
     "@vitejs/plugin-react": "^5.0.4",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
+    "docx": "^9.7.1",
     "dotenv": "^17.2.3",
+    "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "express-rate-limit": "^8.5.2",
     "helmet": "^8.3.0",
@@ -40,6 +42,7 @@
     "motion": "^12.23.24",
     "multer": "^2.2.0",
     "mysql2": "^3.23.0",
+    "pdfkit": "^0.19.1",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "vite": "^6.2.3",
@@ -52,6 +55,7 @@
     "@types/leaflet": "^1.9.21",
     "@types/multer": "^2.2.0",
     "@types/node": "^22.14.0",
+    "@types/pdfkit": "^0.17.6",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
     "tailwindcss": "^4.1.14",

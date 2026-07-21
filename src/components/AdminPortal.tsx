@@ -78,7 +78,7 @@ type AdminTab =
 export default function AdminPortal({ user, onBackToSelection, onLogout }: AdminPortalProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedCountryCode, setSelectedCountryCode] = useState<string>('SL');
+  const selectedCountryCode = 'SL';
 
   // Core Persistent States
   const [countriesList, setCountriesList] = useState<CountryConfig[]>([]);
@@ -94,10 +94,10 @@ export default function AdminPortal({ user, onBackToSelection, onLogout }: Admin
       // Load or seed countries
       const storedCountries = operationalStore.getItem('ecoclean_countries');
       if (storedCountries) {
-        setCountriesList(JSON.parse(storedCountries));
+        setCountriesList((JSON.parse(storedCountries) as CountryConfig[]).filter(country=>country.code==='SL'));
       } else {
-        setCountriesList(COUNTRIES);
-        operationalStore.setItem('ecoclean_countries', JSON.stringify(COUNTRIES));
+        setCountriesList(COUNTRIES.filter(country=>country.code==='SL'));
+        operationalStore.setItem('ecoclean_countries', JSON.stringify(COUNTRIES.filter(country=>country.code==='SL')));
       }
 
       // Load or seed core reports
@@ -107,7 +107,7 @@ export default function AdminPortal({ user, onBackToSelection, onLogout }: Admin
         loadedReports = JSON.parse(storedReports);
       } else {
         // Collect all default reports for all countries to start with a rich combined list
-        loadedReports = COUNTRIES.flatMap(c => getCountryReports(c.code));
+        loadedReports = getCountryReports('SL');
         operationalStore.setItem('ecoclean_reports', JSON.stringify(loadedReports));
       }
       setAllReports(loadedReports);
@@ -115,10 +115,10 @@ export default function AdminPortal({ user, onBackToSelection, onLogout }: Admin
       // Load or seed users list
       const storedUsers = operationalStore.getItem('ecoclean_admin_users');
       if (storedUsers) {
-        setAdminUsers(JSON.parse(storedUsers));
+        setAdminUsers((JSON.parse(storedUsers) as AdminUser[]).filter(account=>account.countryCode==='SL'));
       } else {
-        setAdminUsers(DEFAULT_ADMIN_USERS);
-        operationalStore.setItem('ecoclean_admin_users', JSON.stringify(DEFAULT_ADMIN_USERS));
+        setAdminUsers(DEFAULT_ADMIN_USERS.filter(account=>account.countryCode==='SL'));
+        operationalStore.setItem('ecoclean_admin_users', JSON.stringify(DEFAULT_ADMIN_USERS.filter(account=>account.countryCode==='SL')));
       }
 
       // Load or seed audit logs
@@ -196,27 +196,6 @@ export default function AdminPortal({ user, onBackToSelection, onLogout }: Admin
     operationalStore.setItem('ecoclean_countries', JSON.stringify(updatedCountries));
   };
 
-  // Change country callback with audit recording
-  const handleCountryChange = (countryCode: string) => {
-    setSelectedCountryCode(countryCode);
-    
-    // Log audit of changing jurisdiction context
-    const countryName = COUNTRIES.find(c => c.code === countryCode)?.name || countryCode;
-    const newAudit: AuditLog = {
-      id: `AUD-${Math.floor(9000 + Math.random() * 1000)}`,
-      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      userEmail: user?.email || 'admin@ecoclean.gov',
-      userRole: 'Administrator',
-      countryCode,
-      action: `Switched national context dashboard view to ${countryName}`,
-      module: 'Security',
-      ipAddress: '197.224.64.12',
-      status: 'Success'
-    };
-
-    saveAuditLogsState([newAudit, ...auditLogs]);
-  };
-
   // Safe navigation tab switcher
   const handleTabChange = (tab: AdminTab) => {
     setActiveTab(tab);
@@ -228,56 +207,26 @@ export default function AdminPortal({ user, onBackToSelection, onLogout }: Admin
   const activeCountry = countriesList.find(c => c.code === selectedCountryCode) || COUNTRIES[0];
 
   // Filter report lists that relate to selected country context
-  const countryReports = allReports.filter(r => {
-    // Determine country code from report prefix or geographical state coordinates or municipal matching
-    if (r.id.startsWith('R-SL-') || r.municipality.includes('Freetown') || r.municipality.includes('Bo') || r.municipality.includes('Kenema') || r.municipality.includes('Makeni')) {
-      return selectedCountryCode === 'SL';
-    }
-    if (r.id.startsWith('R-LR-') || r.municipality.includes('Monrovia') || r.municipality.includes('Paynesville')) {
-      return selectedCountryCode === 'LR';
-    }
-    if (r.id.startsWith('R-GH-') || r.municipality.includes('Accra') || r.municipality.includes('Kumasi')) {
-      return selectedCountryCode === 'GH';
-    }
-    if (r.id.startsWith('R-NG-') || r.municipality.includes('LAWMA') || r.municipality.includes('Ikeja') || r.municipality.includes('Abuja')) {
-      return selectedCountryCode === 'NG';
-    }
-    if (r.id.startsWith('R-GN-') || r.municipality.includes('Conakry') || r.municipality.includes('Kaloum') || r.municipality.includes('Ratoma')) {
-      return selectedCountryCode === 'GN';
-    }
-    if (r.id.startsWith('R-GM-') || r.municipality.includes('Banjul') || r.municipality.includes('Kanifing')) {
-      return selectedCountryCode === 'GM';
-    }
-    
-    // Default fallback to first matching
-    return selectedCountryCode === 'SL';
-  });
+  // This release operates only within Sierra Leone. Foreign demo records are never exposed.
+  const countryReports = allReports.filter(r =>
+    !/^R-(LR|GH|NG|GN|GM)-/.test(r.id) &&
+    !/(Monrovia|Paynesville|Accra|Kumasi|LAWMA|Ikeja|Abuja|Conakry|Kaloum|Ratoma|Banjul|Kanifing)/i.test(r.municipality)
+  );
 
   // Nav Links for the sidebar, grouped logically
   const navLinks = [
     { id: 'dashboard' as const, label: 'Command Overview', icon: Layers },
     { id: 'map' as const, label: 'GIS Command Center', icon: Map },
-    { id: 'noc' as const, label: 'National Ops Center', icon: Radio },
-    { id: 'fleet' as const, label: 'Fleet Management', icon: Truck },
-    { id: 'smart-bins' as const, label: 'Smart Bins (IoT)', icon: Trash2 },
-    { id: 'disaster' as const, label: 'Disaster Response', icon: ShieldCheck },
-    { id: 'assets' as const, label: 'Asset Registry', icon: Briefcase },
-    { id: 'contractors' as const, label: 'Contractors & SLAs', icon: Building },
-    { id: 'docs' as const, label: 'Knowledge Hub', icon: HelpCircle },
-    { id: 'apis' as const, label: 'Developer APIs', icon: Terminal },
-    { id: 'users' as const, label: 'Identity & Directory', icon: Users },
-    { id: 'municipalities' as const, label: 'Municipal Zones', icon: Sliders },
-    { id: 'reports' as const, label: 'Incidents Registry', icon: ShieldCheck, badgeCount: countryReports.filter(r => r.status === 'Pending').length },
-    { id: 'analytics' as const, label: 'National Analytics', icon: BarChart2 },
-    { id: 'environment' as const, label: 'Ozone & Carbon', icon: Radio },
-    { id: 'security' as const, label: 'Audit Timeline', icon: ShieldAlert },
-    { id: 'settings' as const, label: 'System Properties', icon: Settings },
-    { id: 'rbac' as const, label: 'RBAC Authorization', icon: Database },
-    { id: 'exports' as const, label: 'Data Extraction', icon: Download },
-    { id: 'notifications' as const, label: 'Broadcaster Node', icon: Bell },
-    { id: 'service-center' as const, label: 'Service Center', icon: HelpCircle },
-    { id: 'system-health' as const, label: 'Server Diagnostics', icon: Cpu },
-    { id: 'profile' as const, label: 'My Identity', icon: User }
+    { id: 'reports' as const, label: 'Reports & Assignment', icon: ShieldCheck, badgeCount: countryReports.filter(r => r.status === 'Pending').length },
+    { id: 'users' as const, label: 'Users', icon: Users },
+    { id: 'municipalities' as const, label: 'Districts & Municipalities', icon: Sliders },
+    { id: 'service-center' as const, label: 'Communications', icon: HelpCircle },
+    { id: 'notifications' as const, label: 'Notifications', icon: Bell },
+    { id: 'exports' as const, label: 'Exports', icon: Download },
+    { id: 'security' as const, label: 'Audit Logs', icon: ShieldAlert },
+    { id: 'settings' as const, label: 'Settings', icon: Settings },
+    { id: 'system-health' as const, label: 'System Health', icon: Cpu },
+    { id: 'profile' as const, label: 'My Profile', icon: User }
   ];
 
   return (
@@ -300,24 +249,7 @@ export default function AdminPortal({ user, onBackToSelection, onLogout }: Admin
 
           <div className="bg-slate-950/60 border border-slate-800 p-3 rounded-xl flex items-center gap-3"><AuthenticatedAvatar user={user} className="w-9 h-9" textClassName="text-xs"/><div className="min-w-0"><span className="text-xs font-bold text-white block truncate">{user?.fullName}</span><span className="text-[8px] text-brand-accent font-mono uppercase font-bold block mt-1">{user?.roleLabel||'Administrator'}{user?.municipality?` • ${user.municipality}`:''}</span></div></div>
 
-          {/* Dynamic Country Selector inside Sidebar */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono block px-1">Sovereign Jurisdiction</label>
-            <div className="relative">
-              <select
-                value={selectedCountryCode}
-                onChange={e => handleCountryChange(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-brand-primary appearance-none cursor-pointer"
-              >
-                {COUNTRIES.map(c => (
-                  <option key={c.code} value={c.code} className="bg-slate-950 text-white">
-                    {c.flag} {c.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
+          <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2"><span className="text-[10px] font-bold text-brand-accent uppercase tracking-wider font-mono">🇸🇱 Sierra Leone Operations</span></div>
 
           {/* Sidebar Menu Navigation */}
           <nav className="space-y-1 pt-2">
@@ -387,16 +319,7 @@ export default function AdminPortal({ user, onBackToSelection, onLogout }: Admin
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Dynamic Mobile Country Flag selection */}
-          <select
-            value={selectedCountryCode}
-            onChange={e => handleCountryChange(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none"
-          >
-            {COUNTRIES.map(c => (
-              <option key={c.code} value={c.code}>{c.flag}</option>
-            ))}
-          </select>
+          <span className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs font-bold">🇸🇱</span>
 
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -489,7 +412,7 @@ export default function AdminPortal({ user, onBackToSelection, onLogout }: Admin
         {activeTab === 'reports' && (
           <ReportManagementCenter 
             country={activeCountry}
-            reports={allReports}
+            reports={countryReports}
             onSaveReports={saveReportsState}
           />
         )}

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { 
   ArrowLeft, Clock, MapPin, CheckCircle2, ChevronRight, Play, Camera, 
-  Upload, FileText, Check, AlertTriangle, HelpCircle, UserCheck, ShieldCheck, Trash2 
+  Upload, Images, FileText, Check, AlertTriangle, HelpCircle, UserCheck, ShieldCheck, Trash2
 } from 'lucide-react';
 import { StaffTask } from '../../lib/staffData';
 import { uploadService } from '../../lib/services';
@@ -17,7 +17,8 @@ export default function TaskExecution({ task, onBackToDetails, onUpdateStatus }:
   const [activeNotes, setActiveNotes] = useState('');
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [evidenceFiles,setEvidenceFiles]=useState<File[]>([]);
-  const fileInput=useRef<HTMLInputElement>(null);
+  const cameraInput=useRef<HTMLInputElement>(null);
+  const galleryInput=useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   
   if (!task) {
@@ -78,14 +79,14 @@ export default function TaskExecution({ task, onBackToDetails, onUpdateStatus }:
           alert('You must upload at least one "After Cleanup" evidence photo to submit for verification.');
           return;
         }
-        for(const file of evidenceFiles){const {data}=await uploadService.upload('task_evidence',file,{taskId:task.id});const url=mediaUrl(data[0].url);if(url)uploadedPhotos.push(url);}nextStatus = 'Verification Pending';
+        {const persistedPhotos:string[]=[];for(const file of evidenceFiles){const {data}=await uploadService.upload('task_evidence',file,{taskId:task.id});const url=mediaUrl(data[0].url);if(url)persistedPhotos.push(url);}setUploadedPhotos(persistedPhotos);nextStatus = 'Verification Pending';
         addedNotes.push('Cleanup done. After photos submitted for supervisor clearance.');
         if (activeNotes.trim()) addedNotes.push(`Operator Notes: ${activeNotes}`);
-        break;
+        onUpdateStatus(task.id, nextStatus, addedNotes, persistedPhotos);
+        setActiveNotes('');
+        return;}
       case 'Verification Pending':
-        nextStatus = 'Completed';
-        addedNotes.push('Supervisor verified closure. Points dispatched to reporting citizen.');
-        break;
+        return;
       default:
         break;
     }
@@ -254,13 +255,12 @@ export default function TaskExecution({ task, onBackToDetails, onUpdateStatus }:
                       <p className="text-xs font-bold text-gray-700">Drag & Drop "After" photo here</p>
                       <p className="text-[10px] text-gray-400 mt-1">Supports JPG, PNG up to 10MB</p>
                     </div>
-                    <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={e=>addFiles(e.target.files)}/><button
-                      type="button"
-                      onClick={()=>fileInput.current?.click()}
-                      className="mt-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-bold text-[10px] px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-sm"
-                    >
-                      Browse local photo files
-                    </button>
+                    <input ref={cameraInput} type="file" accept="image/*" capture="environment" className="hidden" onChange={e=>{addFiles(e.target.files);e.currentTarget.value='';}}/>
+                    <input ref={galleryInput} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={e=>{addFiles(e.target.files);e.currentTarget.value='';}}/>
+                    <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                      <button type="button" onClick={()=>cameraInput.current?.click()} className="bg-brand-primary text-white font-bold text-[10px] px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5"><Camera className="w-3.5 h-3.5"/>Take Completion Photo</button>
+                      <button type="button" onClick={()=>galleryInput.current?.click()} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-bold text-[10px] px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5"><Images className="w-3.5 h-3.5"/>Choose from Gallery</button>
+                    </div>
                   </div>
 
                   {/* Uploaded photo list preview */}
@@ -307,7 +307,7 @@ export default function TaskExecution({ task, onBackToDetails, onUpdateStatus }:
                     <div>
                       <span className="font-extrabold text-amber-800">Verification Pending Supervisor Audit</span>
                       <p className="text-gray-500 leading-relaxed mt-1">
-                        Your completion photos have been logged. Normally, Inspector <strong className="text-gray-700">{task.assignedSupervisor}</strong> verifies closure physically or via GPS geotags. Reviewers are authorized to trigger a mock simulation of this audit approval below.
+                        Your completion photos have been logged. Inspector <strong className="text-gray-700">{task.assignedSupervisor}</strong> must review the evidence and authorize closure. Staff cannot approve their own work.
                       </p>
                     </div>
                   </div>
@@ -321,14 +321,8 @@ export default function TaskExecution({ task, onBackToDetails, onUpdateStatus }:
                   <span className="text-xs font-extrabold text-gray-800 mt-0.5 block uppercase tracking-wider">{task.status}</span>
                 </div>
 
-                <button
-                  onClick={handleAdvanceStep}
-                  className="w-full sm:w-auto bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs px-6 py-3.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-brand-primary/10"
-                >
-                  <Play className="w-3.5 h-3.5 fill-white" />
-                  <span>{getNextActionLabel()}</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                {task.status !== 'Verification Pending' && <button onClick={handleAdvanceStep} className="w-full sm:w-auto bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs px-6 py-3.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-brand-primary/10"><Play className="w-3.5 h-3.5 fill-white"/><span>{getNextActionLabel()}</span><ChevronRight className="w-4 h-4"/></button>}
+                {task.status === 'Verification Pending' && <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">Awaiting supervisor verification</span>}
               </div>
 
             </div>

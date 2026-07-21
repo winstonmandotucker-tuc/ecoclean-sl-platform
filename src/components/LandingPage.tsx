@@ -634,6 +634,7 @@ export default function LandingPage({ onNavigate, onEnterOnboarding }: LandingPa
                 <li><a onClick={onEnterOnboarding} className="hover:text-white cursor-pointer transition-colors block">Onboarding Walkthrough</a></li>
                 <li><a onClick={() => onNavigate('login')} className="hover:text-white cursor-pointer transition-colors block">National Waste Standards</a></li>
                 <li><a onClick={() => onNavigate('login')} className="hover:text-white cursor-pointer transition-colors block">Developer APIs</a></li>
+                <li><a href="tel:*123%23" className="hover:text-white transition-colors block">USSD Demo: *123#</a></li>
               </ul>
             </div>
 
@@ -671,7 +672,7 @@ export default function LandingPage({ onNavigate, onEnterOnboarding }: LandingPa
 
           <div className="pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-emerald-100/40 gap-4">
             <div>
-              <p>&copy; {new Date().getFullYear()} ECOCLEAN SL Secretariat. Powered by Government of Sierra Leone Digital Services.</p>
+              <p>&copy; {new Date().getFullYear()} Samuel Mando Tucker. All Rights Reserved. ECOCLEAN SL.</p>
             </div>
             <div className="flex gap-6">
               <a onClick={() => onNavigate('login')} className="hover:text-white cursor-pointer transition-colors">Privacy Policy</a>

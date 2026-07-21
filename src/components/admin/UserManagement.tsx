@@ -19,7 +19,7 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
   const [newFullName, setNewFullName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
-  const [newRole, setNewRole] = useState<'citizen' | 'staff' | 'supervisor' | 'admin' | 'super-admin'>('citizen');
+  const [newRole, setNewRole] = useState<'citizen' | 'staff' | 'supervisor' | 'admin'>('citizen');
   const [newCountry, setNewCountry] = useState(selectedCountryCode);
   const [newMuni, setNewMuni] = useState('');
 
@@ -93,7 +93,7 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
         <div>
           <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 tracking-tight">Identity & Directory Services</h2>
           <p className="text-xs text-gray-400 mt-1">
-            Centrally manage credential status, administrative roles, and municipal clearance zones across West Africa.
+            Manage credentials, operational roles, and municipal clearance zones across Sierra Leone.
           </p>
         </div>
         <button 
@@ -155,8 +155,7 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
                 <option value="citizen">Citizen Advocate (Public)</option>
                 <option value="staff">Field Sanitary Staff (Operational)</option>
                 <option value="supervisor">Municipal Supervisor (Control)</option>
-                <option value="admin">National Secretariat Administrator (Supreme)</option>
-                <option value="super-admin">Super Administrator (Global Sovereign)</option>
+                <option value="admin">ECOCLEAN Administrator</option>
               </select>
             </div>
 
@@ -229,7 +228,6 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
               <option value="staff">Staff</option>
               <option value="supervisor">Supervisor</option>
               <option value="admin">Admin</option>
-              <option value="super-admin">Super Admin</option>
             </select>
 
             <select
@@ -309,9 +307,7 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
 
                       <td className="p-4">
                         <span className={`inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full text-[10px] font-mono capitalize ${
-                          u.role === 'super-admin'
-                            ? 'bg-slate-900 text-purple-300 border border-purple-900/40 shadow-sm shadow-purple-900/10'
-                            : u.role === 'admin' 
+                          u.role === 'admin'
                             ? 'bg-purple-50 text-purple-700 border border-purple-100' 
                             : u.role === 'supervisor'
                             ? 'bg-blue-50 text-blue-700 border border-blue-100'

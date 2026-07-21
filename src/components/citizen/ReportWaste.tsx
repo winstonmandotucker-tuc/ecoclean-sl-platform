@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { operationalStore } from '../../lib/operationalStore';
-import { MapPin, Camera, Video, Sparkles, Send, FileText, X, Compass, Check } from 'lucide-react';
+import { MapPin, Camera, Images, Send, FileText, X, Compass } from 'lucide-react';
 import { DISTRICTS, MUNICIPALITIES, WASTE_CATEGORIES, PRIORITIES, Report, GPSCoordinates } from '../../lib/citizenData';
 
 interface ReportWasteProps {
@@ -22,8 +22,8 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
   const [isDetectingGps, setIsDetectingGps] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [evidenceFiles,setEvidenceFiles]=useState<File[]>([]);
-  const photoInput=useRef<HTMLInputElement>(null);
-  const [video, setVideo] = useState<string | undefined>(undefined);
+  const cameraInput=useRef<HTMLInputElement>(null);
+  const galleryInput=useRef<HTMLInputElement>(null);
   const [draftSaved, setDraftSaved] = useState(false);
 
   // Update municipality options based on selected district
@@ -64,11 +64,6 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
 
   const handlePhotoUpload = (files:FileList|null) => {if(!files)return;const accepted=Array.from(files).filter(file=>['image/jpeg','image/png','image/webp'].includes(file.type)&&file.size<=8*1024*1024).slice(0,5-evidenceFiles.length);setEvidenceFiles(current=>[...current,...accepted]);setPhotos(current=>[...current,...accepted.map(file=>URL.createObjectURL(file))]);};
 
-  // Simulate Video Upload
-  const handleVideoUpload = () => {
-    setVideo('Simulated_Incident_Video.mp4');
-  };
-
   const handleSaveDraft = () => {
     const draft = {
       title,
@@ -81,7 +76,6 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
       zone,
       priority,
       photos,
-      video,
       gps: gps || { lat: 8.4844, lng: -13.2344 }
     };
     operationalStore.setItem('ecoclean_citizen_draft_report', JSON.stringify(draft));
@@ -103,7 +97,6 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
         setZone(draft.zone || 'Zone 1 (Aberdeen)');
         setPriority(draft.priority || 'Medium');
         setPhotos(draft.photos || []);
-        setVideo(draft.video);
         setGps(draft.gps);
       } catch (e) {
         console.error(e);
@@ -130,7 +123,6 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
       zone,
       priority,
       photos: photos.length > 0 ? photos : ['/assets/demo-waste.svg'],
-      video,
       gps: defaultGps
       ,evidenceFiles
     });
@@ -312,48 +304,47 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
 
         {/* Evidence Attachments & GPS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Photo and Video simulation */}
+          {/* Camera and gallery evidence */}
           <div className="space-y-3 bg-gray-50/50 border border-gray-200/60 p-5 rounded-2xl">
             <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
               <Camera className="w-4 h-4 text-brand-primary" />
-              <span>Media Upload (Evidence)</span>
+              <span>Photo Evidence</span>
             </h3>
 
+            <p className="text-[11px] text-gray-400 leading-relaxed">
+              Take a new photograph with your device camera or select existing evidence from your gallery. Up to five verified images may be attached.
+            </p>
+
             <div className="grid grid-cols-2 gap-3">
-              <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={e=>handlePhotoUpload(e.target.files)}/><button
+              <input ref={cameraInput} type="file" accept="image/*" capture="environment" className="hidden" onChange={e=>{handlePhotoUpload(e.target.files);e.currentTarget.value='';}}/>
+              <input ref={galleryInput} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={e=>{handlePhotoUpload(e.target.files);e.currentTarget.value='';}}/>
+              <button
                 type="button"
-                onClick={()=>photoInput.current?.click()}
+                onClick={()=>cameraInput.current?.click()}
                 className="border-2 border-dashed border-gray-200 hover:border-brand-primary/50 bg-white p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer hover:bg-emerald-50/10 group"
               >
                 <div className="w-9 h-9 rounded-full bg-brand-primary/5 text-brand-primary flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Camera className="w-4.5 h-4.5" />
                 </div>
-                <span className="text-[11px] font-bold text-gray-700">Attach Photo</span>
-                <span className="text-[9px] text-gray-400">JPG, PNG or WebP • 8 MB</span>
+                <span className="text-[11px] font-bold text-gray-700">Take a Photo</span>
+                <span className="text-[9px] text-gray-400">Open rear camera</span>
               </button>
 
               <button
                 type="button"
-                onClick={handleVideoUpload}
-                disabled={!!video}
-                className={`border-2 border-dashed p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all ${
-                  video
-                    ? 'border-brand-success bg-emerald-50/20 cursor-not-allowed'
-                    : 'border-gray-200 hover:border-brand-primary/50 bg-white hover:bg-emerald-50/10 cursor-pointer group'
-                }`}
+                onClick={()=>galleryInput.current?.click()}
+                className="border-2 border-dashed border-gray-200 hover:border-brand-primary/50 bg-white p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer hover:bg-emerald-50/10 group"
               >
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                  video ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-primary/5 text-brand-primary group-hover:scale-110 transition-transform'
-                }`}>
-                  {video ? <Check className="w-4.5 h-4.5" /> : <Video className="w-4.5 h-4.5" />}
+                <div className="w-9 h-9 rounded-full bg-brand-primary/5 text-brand-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Images className="w-4.5 h-4.5" />
                 </div>
-                <span className="text-[11px] font-bold text-gray-700">{video ? 'Video Loaded' : 'Attach Video'}</span>
-                <span className="text-[9px] text-gray-400">{video ? 'Simulated.mp4' : 'Optional video clip'}</span>
+                <span className="text-[11px] font-bold text-gray-700">Choose from Gallery</span>
+                <span className="text-[9px] text-gray-400">JPG, PNG or WebP • 8 MB</span>
               </button>
             </div>
 
             {/* List of uploaded items */}
-            {(photos.length > 0 || video) && (
+            {photos.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100 mt-2">
                 {photos.map((ph, idx) => (
                   <div key={idx} className="relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200 shrink-0">
@@ -367,18 +358,6 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
                     </button>
                   </div>
                 ))}
-                {video && (
-                  <div className="relative w-14 h-14 bg-gray-800 rounded-lg flex items-center justify-center text-white text-[9px] font-mono border border-gray-700 shrink-0">
-                    <span>VIDEO</span>
-                    <button
-                      type="button"
-                      onClick={() => setVideo(undefined)}
-                      className="absolute top-0.5 right-0.5 bg-black/50 hover:bg-black text-white rounded-full p-0.5 transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>

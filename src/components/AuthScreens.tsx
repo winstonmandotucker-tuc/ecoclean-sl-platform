@@ -60,7 +60,6 @@ export default function AuthScreens({
     { label: 'Staff', email: 'staff@ecoclean.sl', role: 'staff' as const },
     { label: 'Supervisor', email: 'supervisor@ecoclean.sl', role: 'supervisor' as const },
     { label: 'Admin', email: 'admin@ecoclean.sl', role: 'admin' as const },
-    { label: 'National Admin', email: 'nationaladmin@ecoclean.sl', role: 'super-admin' as const },
   ];
 
   const handleQuickFill = (demoEmail: string) => {
@@ -237,7 +236,7 @@ export default function AuthScreens({
               </p>
               
               {/* Quick instructions */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-6">
+              {import.meta.env.DEV && <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-6">
                 <p className="text-xs text-brand-accent font-semibold mb-2 flex items-center gap-1.5">
                   <UserCheck className="w-3.5 h-3.5" />
                   <span>Development Accounts Available</span>
@@ -245,7 +244,7 @@ export default function AuthScreens({
                 <p className="text-[11px] text-emerald-100/60 leading-relaxed">
                   Select a seeded role below to populate its credentials and securely authenticate against the application database.
                 </p>
-              </div>
+              </div>}
             </div>
           )}
 
@@ -425,7 +424,7 @@ export default function AuthScreens({
                 </div>
 
                 {/* Demo account helper row */}
-                <div className="pt-6 border-t border-gray-100">
+                {import.meta.env.DEV && <div className="pt-6 border-t border-gray-100">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-3">Quick Login (Development Accounts)</p>
                   <div className="grid grid-cols-2 gap-2">
                     {demoAccounts.map((account) => (
@@ -442,7 +441,7 @@ export default function AuthScreens({
                       </button>
                     ))}
                   </div>
-                </div>
+                </div>}
 
               </form>
             )}

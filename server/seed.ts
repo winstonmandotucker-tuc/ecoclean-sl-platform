@@ -3,7 +3,7 @@ import { pool } from './db.js';
 
 const roles = [
   ['CITIZEN', 'Citizen'], ['STAFF', 'Staff'], ['SUPERVISOR', 'Supervisor'],
-  ['ADMINISTRATOR', 'Administrator'], ['NATIONAL_ADMIN', 'National Admin'],
+  ['ADMINISTRATOR', 'Administrator'],
 ];
 for (const role of roles) await pool.query('INSERT INTO roles (code,name) VALUES (?,?) ON DUPLICATE KEY UPDATE name=VALUES(name)', role);
 const permissions = ['reports.create','reports.view','reports.manage','tasks.view','tasks.manage','notifications.view','users.manage','audit.view','gis.view'];
@@ -13,7 +13,6 @@ const grants: Record<string,string[]> = {
   STAFF: ['reports.view','tasks.view','notifications.view','gis.view'],
   SUPERVISOR: ['reports.view','reports.manage','tasks.view','tasks.manage','notifications.view','gis.view'],
   ADMINISTRATOR: permissions,
-  NATIONAL_ADMIN: permissions,
 };
 for (const [role, codes] of Object.entries(grants)) {
   for (const code of codes) await pool.query(`INSERT IGNORE INTO role_permissions (role_id,permission_id) SELECT r.id,p.id FROM roles r,permissions p WHERE r.code=? AND p.code=?`, [role, code]);
@@ -26,7 +25,6 @@ const users = [
   ['Abdul Kamara','staff@ecoclean.sl','+23276000002','STAFF'],
   ['Regional Supervisor','supervisor@ecoclean.sl','+23276000003','SUPERVISOR'],
   ['Admin Director','admin@ecoclean.sl','+23276000004','ADMINISTRATOR'],
-  ['National Secretariat','nationaladmin@ecoclean.sl','+23276000005','NATIONAL_ADMIN'],
 ];
 for (const user of users) await pool.query(`INSERT INTO users (full_name,email,phone,password_hash,role_id,status,email_verified_at)
   SELECT ?,?,?,?,r.id,'active',NOW() FROM roles r WHERE r.code=?
@@ -49,5 +47,5 @@ await pool.query("INSERT INTO districts (municipality_id,name,code) SELECT id,'W
 await pool.query("UPDATE users SET municipality_id=(SELECT id FROM municipalities WHERE code='FCC'),district_id=(SELECT id FROM districts WHERE code='WAU') WHERE email IN ('supervisor@ecoclean.sl','staff@ecoclean.sl')");
 await pool.query("INSERT INTO wards (district_id,name,code) SELECT id,'Central Freetown','FCC-CENTRAL' FROM districts WHERE code='WAU' ON DUPLICATE KEY UPDATE name=VALUES(name),district_id=VALUES(district_id)");
 await pool.query("INSERT INTO zones (ward_id,name,code) SELECT id,'Central Operations Zone','FCC-CENTRAL-01' FROM wards WHERE code='FCC-CENTRAL' ON DUPLICATE KEY UPDATE name=VALUES(name)");
-console.log('Seeded roles, permissions, geography, and five development accounts.');
+console.log('Seeded roles, permissions, geography, and four development accounts.');
 await pool.end();

@@ -28,7 +28,7 @@ import VerificationCenter from './supervisor/VerificationCenter';
 import MunicipalityPerformance from './supervisor/MunicipalityPerformance';
 import SupervisorNotifications from './supervisor/SupervisorNotifications';
 import SupervisorProfile from './supervisor/SupervisorProfile';
-import { authService, notificationService } from '../lib/services';
+import { authService, notificationService, reportService, staffDirectoryService, taskService } from '../lib/services';
 
 // Import supervisor defaults
 import { 
@@ -122,6 +122,13 @@ export default function SupervisorPortal({ user, onBackToSelection, onLogout }: 
     }
   }, []);
 
+  useEffect(()=>{
+    void Promise.all([reportService.list(),staffDirectoryService.list()]).then(([reportResponse,staffResponse])=>{
+      setReports(reportResponse.data.map((item:any)=>({id:String(item.id),referenceNumber:item.reference,title:item.title,description:item.description,category:item.category,priority:(item.priority?.[0]?.toUpperCase()+item.priority?.slice(1))||'Medium',status:String(item.status||'pending').split('_').map((word:string)=>word[0]?.toUpperCase()+word.slice(1)).join(' '),date:String(item.created_at||'').slice(0,10),location:item.address||'Location not supplied',district:item.district||'',municipality:item.municipality||'',ward:item.ward||'',zone:item.zone||'',photos:[],gps:{lat:Number(item.latitude),lng:Number(item.longitude)}})));
+      setStaff(staffResponse.data.map((item:any)=>({id:String(item.id),name:item.name,role:'Collector',status:'Active',vessel:'Unassigned',phone:item.phone||'Not supplied',district:item.district||'',municipality:item.municipality||'',rating:0,completedTasks:0,fuelBalance:'N/A',gps:{lat:0,lng:0}})));
+    }).catch(error=>console.error('Unable to load live supervisor operations.',error));
+  },[]);
+
   // Save states helper
   const saveReportsState = (newReports: Report[]) => {
     setReports(newReports);
@@ -150,7 +157,7 @@ export default function SupervisorPortal({ user, onBackToSelection, onLogout }: 
   };
 
   // 1. Assign Report Callback
-  const handleAssignReport = (
+  const handleAssignReport = async (
     reportId: string, 
     staffId: string, 
     priority: 'Low' | 'Medium' | 'High', 
@@ -161,12 +168,21 @@ export default function SupervisorPortal({ user, onBackToSelection, onLogout }: 
     const selectedRep = reports.find(r => r.id === reportId);
     if (!selectedStaff || !selectedRep) return;
 
-    // A. Update citizen report status
+    let persistedTask:any;
+    try {
+      const response=await taskService.create({reportId:Number(reportId),assignedTo:Number(staffId),title:`Dispatch: ${selectedRep.title}`,description:notesText,priority:priority.toLowerCase(),dueAt:new Date(Date.now()+(priority==='High'?8:24)*60*60*1000).toISOString()});
+      persistedTask=response.data;
+    } catch (error) {
+      alert(error instanceof Error?error.message:'The assignment could not be saved.');
+      return;
+    }
+
+    // A. Update the view after MariaDB confirms the assignment.
     const updatedReports = reports.map(r => {
       if (r.id === reportId) {
         return {
           ...r,
-          status: 'In Progress' as const,
+          status: 'Assigned' as const,
           assignedTeam: `${selectedStaff.name} (Vessel: ${selectedStaff.vessel})`
         };
       }
@@ -175,10 +191,10 @@ export default function SupervisorPortal({ user, onBackToSelection, onLogout }: 
     saveReportsState(updatedReports);
 
     // B. Generate and insert new staff task to staff tasks list (synchronized live)
-    const newTaskId = `T-${Math.floor(100 + Math.random() * 900)}`;
+    const newTaskId = String(persistedTask.id);
     const newStaffTask: StaffTask = {
       id: newTaskId,
-      referenceNumber: selectedRep.referenceNumber,
+      referenceNumber: persistedTask.reference||selectedRep.referenceNumber,
       title: `Dispatch: ${selectedRep.title}`,
       category: selectedRep.category,
       description: selectedRep.description,

@@ -9,7 +9,6 @@ const CitizenPortal=lazy(()=>import('./components/CitizenPortal'));
 const StaffPortal=lazy(()=>import('./components/StaffPortal'));
 const SupervisorPortal=lazy(()=>import('./components/SupervisorPortal'));
 const AdminPortal=lazy(()=>import('./components/AdminPortal'));
-const SuperAdminPortal=lazy(()=>import('./components/SuperAdminPortal'));
 const Unauthorized=lazy(()=>import('./components/Unauthorized'));
 import { authService } from './lib/services';
 import { operationalStore } from './lib/operationalStore';
@@ -180,13 +179,6 @@ export default function App() {
         />
       )}
 
-      {currentView === 'super-admin-dashboard' && (
-        <SuperAdminPortal 
-          user={user}
-          onLogout={handleLogout}
-        />
-      )}
-
       {currentView === 'unauthorized' && (
         <Unauthorized 
           onLogout={handleLogout}
@@ -204,8 +196,7 @@ export default function App() {
         currentView !== 'citizen-dashboard' && 
         currentView !== 'staff-dashboard' && 
         currentView !== 'supervisor-dashboard' && 
-        currentView !== 'admin-dashboard' &&
-        currentView !== 'super-admin-dashboard') && (
+        currentView !== 'admin-dashboard') && (
         <DashboardPlaceholders 
           user={user}
           activePortal={currentView.split('-')[0] as 'citizen' | 'staff' | 'supervisor' | 'admin'}

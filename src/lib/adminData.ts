@@ -33,7 +33,7 @@ export interface AdminUser {
   fullName: string;
   email: string;
   phone?: string;
-  role: 'citizen' | 'staff' | 'supervisor' | 'admin' | 'super-admin';
+  role: 'citizen' | 'staff' | 'supervisor' | 'admin';
   countryCode: string;
   municipality: string;
   status: 'Active' | 'Suspended' | 'Pending';
@@ -75,13 +75,24 @@ export const COUNTRIES: CountryConfig[] = [
     currency: 'SLE',
     phoneCode: '+232',
     agencyName: 'EPA-SL (Environmental Protection Agency)',
-    districts: ['Western Area Urban', 'Western Area Rural', 'Bo District', 'Kenema District', 'Bombali District'],
+    districts: ['Bo District','Bombali District','Bonthe District','Falaba District','Kailahun District','Kambia District','Karene District','Kenema District','Koinadugu District','Kono District','Moyamba District','Port Loko District','Pujehun District','Tonkolili District','Western Area Urban','Western Area Rural'],
     municipalities: {
+      'Bo District': ['Bo City Council (BCC)','Bo District Council'],
+      'Bombali District': ['Makeni City Council (MCC)','Bombali District Council'],
+      'Bonthe District': ['Bonthe Municipal Council','Bonthe District Council'],
+      'Falaba District': ['Falaba District Council'],
+      'Kailahun District': ['Kailahun District Council'],
+      'Kambia District': ['Kambia District Council'],
+      'Karene District': ['Karene District Council'],
+      'Kenema District': ['Kenema City Council (KCC)','Kenema District Council'],
+      'Koinadugu District': ['Koinadugu District Council'],
+      'Kono District': ['Koidu New Sembehun City Council','Kono District Council'],
+      'Moyamba District': ['Moyamba District Council'],
+      'Port Loko District': ['Port Loko City Council','Port Loko District Council'],
+      'Pujehun District': ['Pujehun District Council'],
+      'Tonkolili District': ['Tonkolili District Council'],
       'Western Area Urban': ['Freetown City Council (FCC)'],
-      'Western Area Rural': ['Waterloo Rural District Council (WRDC)'],
-      'Bo District': ['Bo City Council (BCC)'],
-      'Kenema District': ['Kenema City Council (KCC)'],
-      'Bombali District': ['Makeni City Council (MCC)'],
+      'Western Area Rural': ['Western Area Rural District Council'],
     },
     wards: {
       'Freetown City Council (FCC)': ['Ward 301 (Aberdeen)', 'Ward 302 (Lumley)', 'Ward 303 (Central)', 'Ward 304 (Calaba Town)'],

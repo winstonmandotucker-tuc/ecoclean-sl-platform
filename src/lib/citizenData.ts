@@ -74,25 +74,41 @@ export interface LeaderboardUser {
 }
 
 export const DISTRICTS = [
-  'Western Area Urban',
-  'Western Area Rural',
   'Bo District',
-  'Kenema District',
-  'Bombali (Makeni) District',
-  'Port Loko District',
+  'Bombali District',
+  'Bonthe District',
+  'Falaba District',
+  'Kailahun District',
   'Kambia District',
-  'Kono District'
+  'Karene District',
+  'Kenema District',
+  'Koinadugu District',
+  'Kono District',
+  'Moyamba District',
+  'Port Loko District',
+  'Pujehun District',
+  'Tonkolili District',
+  'Western Area Urban',
+  'Western Area Rural'
 ];
 
 export const MUNICIPALITIES: Record<string, string[]> = {
-  'Western Area Urban': ['Freetown City Council (FCC)'],
-  'Western Area Rural': ['Waterloo Rural District Council (WRDC)'],
   'Bo District': ['Bo City Council (BCC)', 'Bo District Council'],
-  'Kenema District': ['Kenema City Council (KCC)', 'Kenema District Council'],
-  'Bombali (Makeni) District': ['Makeni City Council (MCC)', 'Bombali District Council'],
-  'Port Loko District': ['Port Loko City Council (PLCC)', 'Port Loko District Council'],
+  'Bombali District': ['Makeni City Council (MCC)', 'Bombali District Council'],
+  'Bonthe District': ['Bonthe Municipal Council', 'Bonthe District Council'],
+  'Falaba District': ['Falaba District Council'],
+  'Kailahun District': ['Kailahun District Council'],
   'Kambia District': ['Kambia District Council'],
-  'Kono District': ['Koidu New Sembehun City Council', 'Kono District Council']
+  'Karene District': ['Karene District Council'],
+  'Kenema District': ['Kenema City Council (KCC)', 'Kenema District Council'],
+  'Koinadugu District': ['Koinadugu District Council'],
+  'Kono District': ['Koidu New Sembehun City Council', 'Kono District Council'],
+  'Moyamba District': ['Moyamba District Council'],
+  'Port Loko District': ['Port Loko City Council (PLCC)', 'Port Loko District Council'],
+  'Pujehun District': ['Pujehun District Council'],
+  'Tonkolili District': ['Tonkolili District Council'],
+  'Western Area Urban': ['Freetown City Council (FCC)'],
+  'Western Area Rural': ['Western Area Rural District Council']
 };
 
 export const WASTE_CATEGORIES = [

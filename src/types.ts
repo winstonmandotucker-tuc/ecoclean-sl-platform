@@ -9,7 +9,6 @@ export type ViewState =
   | 'staff-dashboard'
   | 'supervisor-dashboard'
   | 'admin-dashboard'
-  | 'super-admin-dashboard'
   | 'unauthorized';
 
 export interface User {
@@ -17,7 +16,7 @@ export interface User {
   fullName: string;
   email: string;
   phone?: string;
-  role: 'citizen' | 'staff' | 'supervisor' | 'admin' | 'super-admin';
+  role: 'citizen' | 'staff' | 'supervisor' | 'admin';
   roleLabel?: string;
   municipality?: string | null;
   municipalityId?: number | null;
