@@ -2,9 +2,13 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "VITE_API_URL=https://ecoclean-sl-platform-production.up.railway.app/api VITE_API_BASE_URL=https://ecoclean-sl-platform-production.up.railway.app/api VITE_ENABLE_QUICK_LOGIN=true pnpm build",
+  "buildCommand": "VITE_API_URL=/api VITE_API_BASE_URL=/api VITE_ENABLE_QUICK_LOGIN=true pnpm build",
   "outputDirectory": "dist",
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://ecoclean-sl-platform-production.up.railway.app/api/:path*"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
