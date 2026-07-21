@@ -27,7 +27,7 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
   const [submitting,setSubmitting]=useState(false);
   const [error,setError]=useState('');
 
-  const refreshUsers=async()=>{const {data}=await adminUserService.list();onSaveUsers(data.map((row:any)=>({id:String(row.id),fullName:row.full_name,email:row.email,phone:row.phone||undefined,role:row.role==='ADMINISTRATOR'?'admin':String(row.role).toLowerCase(),countryCode:'SL',municipality:row.municipality||'',status:row.status==='active'?'Active':row.status==='pending'?'Pending':'Suspended',lastActive:'Database account'})) as AdminUser[]);};
+  const refreshUsers=async()=>{const {data}=await adminUserService.list();onSaveUsers(data.filter((row:any)=>row.role!=='NATIONAL_ADMIN').map((row:any)=>({id:String(row.id),fullName:row.full_name,email:row.email,phone:row.phone||undefined,role:row.role==='ADMINISTRATOR'?'admin':String(row.role).toLowerCase(),countryCode:'SL',municipality:row.municipality||'',status:row.status==='active'?'Active':row.status==='pending'?'Pending':'Suspended',lastActive:'Database account'})) as AdminUser[]);};
 
   // Explicit user status update handler
   const handleSetStatus = async (userId: string, newStatus: 'Active' | 'Suspended' | 'Pending') => {
@@ -244,8 +244,8 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
               onChange={e => setCountryFilter(e.target.value)}
               className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none"
             >
-              <option value="all">All Nations</option>
-              {COUNTRIES.map(c => (
+              <option value="all">Sierra Leone</option>
+              {COUNTRIES.filter(c=>c.code==='SL').map(c => (
                 <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
               ))}
             </select>

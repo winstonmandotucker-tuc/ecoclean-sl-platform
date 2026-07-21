@@ -50,7 +50,7 @@ export default function AdminDashboard({
           </h1>
           <div className="flex items-center gap-3"><AuthenticatedAvatar user={user}/><div><p className="text-xs font-bold text-white">{user?.roleLabel||'Administrator'}</p>{user?.municipality&&<p className="text-[10px] text-gray-200">{user.municipality}</p>}</div></div>
           <p className="text-gray-200 text-xs md:text-sm leading-relaxed max-w-2xl">
-            You are viewing the supreme platform administrative layer for <span className="text-brand-accent font-bold">{country.name}</span>. 
+            You are managing ECOCLEAN operations for <span className="text-brand-accent font-bold">{country.name}</span>.
             All municipal councils, staff checklists, and environmental intelligence metrics have adapted to this country's jurisdiction.
           </p>
         </div>
@@ -303,7 +303,7 @@ export default function AdminDashboard({
             </div>
             <h4 className="text-sm font-bold text-gray-900">Platform Expansion Compliance</h4>
             <p className="text-xs text-gray-600 leading-relaxed">
-              This node is dynamically operating under the **ECOCLEAN West African Secretariat framework**. 
+              This deployment operates within the **ECOCLEAN Sierra Leone governance framework**.
               Data segregation policies are strictly enforced at the container level.
             </p>
             <div className="text-[10px] text-gray-400 font-mono bg-white p-2 rounded-lg border border-gray-100">
