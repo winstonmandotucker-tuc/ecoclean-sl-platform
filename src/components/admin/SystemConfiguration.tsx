@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Save, Server, Sliders, ShieldCheck, ToggleLeft, ToggleRight, Radio, RefreshCw } from 'lucide-react';
 import { DEFAULT_SYSTEM_CONFIG } from '../../lib/adminData';
+import { systemSettingsService } from '../../lib/services';
 
 interface SystemConfigurationProps {
   onSaveConfig: (newConfig: typeof DEFAULT_SYSTEM_CONFIG) => void;
@@ -9,6 +10,8 @@ interface SystemConfigurationProps {
 export default function SystemConfiguration({ onSaveConfig }: SystemConfigurationProps) {
   const [config, setConfig] = useState(DEFAULT_SYSTEM_CONFIG);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saving,setSaving]=useState(false);
+  const [error,setError]=useState('');
 
   const handleToggleMfa = () => {
     const updated = { ...config, enforceMfaForAdmins: !config.enforceMfaForAdmins };
@@ -28,11 +31,10 @@ export default function SystemConfiguration({ onSaveConfig }: SystemConfiguratio
     setConfig(updated);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSaveConfig(config);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    setSaving(true);setError('');
+    try{await systemSettingsService.save('platform_config',config);onSaveConfig(config);setSaveSuccess(true);setTimeout(() => setSaveSuccess(false), 3000);}catch(cause){setError(cause instanceof Error?cause.message:'Settings could not be saved.');}finally{setSaving(false);}
   };
 
   return (
@@ -48,10 +50,11 @@ export default function SystemConfiguration({ onSaveConfig }: SystemConfiguratio
 
         <button 
           type="submit"
+          disabled={saving}
           className="text-xs font-bold px-4 py-2.5 rounded-xl bg-brand-primary hover:bg-brand-secondary text-white transition-all flex items-center gap-1.5 cursor-pointer"
         >
           <Save className="w-4 h-4 text-brand-accent" />
-          <span>Save Changes</span>
+          <span>{saving?'Saving…':'Save Changes'}</span>
         </button>
       </div>
 
@@ -61,6 +64,7 @@ export default function SystemConfiguration({ onSaveConfig }: SystemConfiguratio
           <span>All operational settings have been re-compiled and distributed across container environments successfully.</span>
         </div>
       )}
+      {error&&<div role="alert" className="bg-red-50 text-red-700 border border-red-100 p-4 rounded-xl text-xs font-semibold">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         

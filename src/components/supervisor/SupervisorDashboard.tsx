@@ -16,7 +16,7 @@ interface SupervisorDashboardProps {
   regions: RegionPerformance[];
   onNavigateTab: (tab: any) => void;
   onDispatchFastCrew: (category: string) => void;
-  onSendBroadcast: (message: string) => void;
+  onSendBroadcast: (message: string) => Promise<void>;
 }
 
 export default function SupervisorDashboard({
@@ -33,6 +33,7 @@ export default function SupervisorDashboard({
   const [broadcastText, setBroadcastText] = useState('');
   const [broadcastType, setBroadcastType] = useState<'info' | 'weather' | 'emergency'>('weather');
   const [broadcastSuccess, setBroadcastSuccess] = useState(false);
+  const [broadcasting,setBroadcasting]=useState(false);const [broadcastError,setBroadcastError]=useState('');
 
   // Stats calculation
   const totalReports = reports.length;
@@ -43,12 +44,13 @@ export default function SupervisorDashboard({
   // High-priority SLA breaches count
   const criticalBreachCount = tasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length;
 
-  const handleBroadcastSubmit = (e: React.FormEvent) => {
+  const handleBroadcastSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!broadcastText.trim()) return;
-    onSendBroadcast(`[${broadcastType.toUpperCase()}] ${broadcastText}`);
+    setBroadcasting(true);setBroadcastError('');try{await onSendBroadcast(`[${broadcastType.toUpperCase()}] ${broadcastText}`);}catch(cause){setBroadcastError(cause instanceof Error?cause.message:'The broadcast could not be sent.');setBroadcasting(false);return;}
     setBroadcastText('');
     setBroadcastSuccess(true);
+    setBroadcasting(false);
     setTimeout(() => setBroadcastSuccess(false), 3000);
   };
 
@@ -450,14 +452,15 @@ export default function SupervisorDashboard({
                   ✓ Message transmitted to all regional cells!
                 </div>
               )}
+              {broadcastError&&<div role="alert" className="p-2 bg-red-50 text-red-700 border border-red-100 rounded-lg text-center text-[10px] font-bold">{broadcastError}</div>}
 
               <button
                 type="submit"
-                disabled={!broadcastText.trim()}
+                disabled={!broadcastText.trim()||broadcasting}
                 className="w-full py-2.5 bg-brand-primary hover:bg-brand-secondary disabled:bg-gray-200 text-white text-xs font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Transmit Broadcast Alert</span>
+                <span>{broadcasting?'Transmitting…':'Transmit Broadcast Alert'}</span>
               </button>
             </form>
           </div>

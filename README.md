@@ -185,6 +185,8 @@ Production is **not certified** because real email/SMS/push credentials are abse
 
 ## Change log
 
+- 21 July 2026 — corrected silent submit failures across Citizen reports and support, Staff task/evidence operations, Supervisor assignments/messages/verification, and Administrator users/reports/settings/broadcasts. Valid Sierra Leone district UI labels now resolve to canonical MariaDB scope, GPS uses device coordinates, and operational actions wait for API confirmation before showing success. Validation evidence is in [docs/FUNCTIONALITY_CORRECTION_REPORT.md](docs/FUNCTIONALITY_CORRECTION_REPORT.md).
+
 ## Authenticated dashboard identity status
 
 All role dashboards and identity capsules now display the real authenticated profile returned by `/api/auth/me`, including full name, profile photo or real initial, role and municipality when configured. Login supports email or phone number. Placeholder identity names were removed. Registration, email login, phone login, logout/login persistence, API restart persistence and MariaDB restart persistence are recorded in [docs/AUTHENTICATED_PROFILE_VALIDATION.md](docs/AUTHENTICATED_PROFILE_VALIDATION.md).

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, AlertTriangle, CheckCircle2, Circle, Clock, ChevronDown, Filter, FileSpreadsheet } from 'lucide-react';
 import { Report } from '../../lib/citizenData';
 import { CountryConfig } from '../../lib/adminData';
-import { reportExportService } from '../../lib/services';
+import { reportExportService, reportService } from '../../lib/services';
 
 interface ReportManagementCenterProps {
   country: CountryConfig;
@@ -23,11 +23,15 @@ export default function ReportManagementCenter({ country, reports, onSaveReports
   const [overrideStatus, setOverrideStatus] = useState<Report['status']>('Pending');
   const [overridePriority, setOverridePriority] = useState<Report['priority']>('Medium');
   const [overrideTeam, setOverrideTeam] = useState('');
+  const [saving,setSaving]=useState(false);const [error,setError]=useState('');
 
   // Save changes
-  const handleSaveChanges = (e: React.FormEvent) => {
+  const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingReport) return;
+
+    setSaving(true);setError('');
+    try{await reportService.update(editingReport.id,{status:overrideStatus.toLowerCase().replace(/ /g,'_'),priority:overridePriority.toLowerCase()});
 
     const updated = reports.map(r => {
       if (r.id === editingReport.id) {
@@ -43,6 +47,7 @@ export default function ReportManagementCenter({ country, reports, onSaveReports
 
     onSaveReports(updated);
     setEditingReport(null);
+    }catch(cause){setError(cause instanceof Error?cause.message:'The report changes could not be saved.');}finally{setSaving(false);}
   };
 
   // Filter logic
@@ -98,6 +103,7 @@ export default function ReportManagementCenter({ country, reports, onSaveReports
           </div>
 
           <form onSubmit={handleSaveChanges} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            {error&&<div role="alert" className="md:col-span-3 bg-red-50 text-red-700 border border-red-100 p-3 rounded-xl text-xs font-semibold">{error}</div>}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Override Status State</label>
               <select 
@@ -131,9 +137,10 @@ export default function ReportManagementCenter({ country, reports, onSaveReports
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Operational Dispatch Unit</label>
               <input 
                 type="text"
+                disabled
                 value={overrideTeam}
                 onChange={e => setOverrideTeam(e.target.value)}
-                placeholder="e.g. Freetown Sanitary Crew Alpha"
+                placeholder="Use the assignment center to select a staff member"
                 className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-brand-primary"
               />
             </div>
@@ -141,9 +148,10 @@ export default function ReportManagementCenter({ country, reports, onSaveReports
             <div className="md:col-span-3 flex justify-end gap-2 pt-2">
               <button 
                 type="submit" 
+                disabled={saving}
                 className="text-xs font-bold px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary cursor-pointer"
               >
-                Commit Changes to Registry
+                {saving?'Saving…':'Commit Changes to Registry'}
               </button>
             </div>
           </form>

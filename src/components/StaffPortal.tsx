@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { operationalStore } from '../lib/operationalStore';
-import { authService, notificationService, taskService } from '../lib/services';
+import { authService, notificationService, taskService, uploadService } from '../lib/services';
+import { mediaUrl } from '../lib/api';
 import { 
   Truck, CheckSquare, Map, Camera, Calendar, Bell, Star, User, 
   ArrowLeft, LogOut, Menu, X, Layers, AlertTriangle, Clock, HelpCircle, ChevronRight, Trophy 
@@ -143,8 +144,8 @@ export default function StaffPortal({ user, onBackToSelection, onLogout }: Staff
     handleTabChange('task-execute');
   };
 
-  const handleAcceptTask = (taskId: string) => {
-    void taskService.update(taskId,{status:'accepted',note:'Operator accepted and acknowledged dispatch.'});
+  const handleAcceptTask = async (taskId: string) => {
+    try{await taskService.update(taskId,{status:'accepted',note:'Operator accepted and acknowledged dispatch.'});}catch(error){alert(error instanceof Error?error.message:'The assignment could not be accepted.');return;}
     const updated = tasks.map(t => {
       if (t.id === taskId) {
         return {
@@ -170,20 +171,20 @@ export default function StaffPortal({ user, onBackToSelection, onLogout }: Staff
     saveNotificationsState([newNotif, ...notifications]);
   };
 
-  const handleRejectTask = (taskId: string) => {
-    void taskService.update(taskId,{status:'rejected',note:'Operator declined the assignment; supervisor review required.'});
+  const handleRejectTask = async (taskId: string) => {
+    try{await taskService.update(taskId,{status:'rejected',note:'Operator declined the assignment; supervisor review required.'});}catch(error){alert(error instanceof Error?error.message:'The assignment could not be declined.');return;}
     alert(`Task ${taskId} decline signal sent to supervisor. Adjusting rosters...`);
     handleTabChange('tasks');
   };
 
-  const handleUpdateStatus = (
+  const handleUpdateStatus = async (
     taskId: string, 
     newStatus: StaffTask['status'], 
     notes: string[], 
     photosAfter: string[]
   ) => {
     const apiStatus:Record<StaffTask['status'],string>={Assigned:'assigned',Accepted:'accepted',Traveling:'in_progress','In Progress':'in_progress','Verification Pending':'completed',Completed:'completed'};
-    void taskService.update(taskId,{status:apiStatus[newStatus],note:notes[0]});
+    try{await taskService.update(taskId,{status:apiStatus[newStatus],note:notes[0]});}catch(error){alert(error instanceof Error?error.message:'The task status could not be saved.');throw error;}
     const updated = tasks.map(t => {
       if (t.id === taskId) {
         return {
@@ -258,12 +259,13 @@ export default function StaffPortal({ user, onBackToSelection, onLogout }: Staff
     saveNotificationsState(notifications.filter(n => n.id !== id));
   };
 
-  const handleUploadGeneralEvidence = (url: string, notes: string) => {
-    // Generate a simulated general task evidence entry or log it as a notification trace
+  const handleUploadGeneralEvidence = async (file:File,taskId:string) => {
+    const result=await uploadService.upload('task_evidence',file,{taskId});const url=mediaUrl(result.data[0].url);if(!url)throw new Error('Evidence upload did not return a valid media record.');
+    saveTasksState(tasks.map(task=>task.id===taskId?{...task,photosAfter:[url,...task.photosAfter]}:task));
     const newNotif: StaffNotification = {
       id: `SN-${Math.floor(100 + Math.random() * 900)}`,
       title: 'General Photo Evidence Logged',
-      body: notes,
+      body: `Evidence stored for task ${taskId}.`,
       date: 'Just Now',
       type: 'System Alert',
       read: false

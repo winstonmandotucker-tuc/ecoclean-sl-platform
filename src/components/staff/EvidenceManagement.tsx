@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { 
   Camera, Filter, Search, Download, Trash2, Eye, Upload, Image as ImageIcon, 
   CheckCircle2, Folder, ListFilter, AlertCircle, FileText, Calendar 
@@ -7,13 +7,16 @@ import { StaffTask } from '../../lib/staffData';
 
 interface EvidenceManagementProps {
   tasks: StaffTask[];
-  onUploadGeneralEvidence: (url: string, notes: string) => void;
+  onUploadGeneralEvidence: (file: File, taskId:string) => Promise<void>;
 }
 
 export default function EvidenceManagement({ tasks, onUploadGeneralEvidence }: EvidenceManagementProps) {
   const [activeFilter, setActiveFilter] = useState<'All' | 'Before' | 'After'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState<{ url: string; title: string; taskId: string; date: string } | null>(null);
+  const fileInput=useRef<HTMLInputElement>(null);
+  const [uploading,setUploading]=useState(false);
+  const [error,setError]=useState('');
 
   // Compile all photos from task records
   const allPhotos = useMemo(() => {
@@ -59,16 +62,7 @@ export default function EvidenceManagement({ tasks, onUploadGeneralEvidence }: E
     });
   }, [allPhotos, activeFilter, searchQuery]);
 
-  const handleSimulateNewUpload = () => {
-    const mockImageUrls = [
-      '/assets/demo-waste.svg',
-      '/assets/demo-waste.svg',
-      '/assets/demo-waste.svg'
-    ];
-    const randomUrl = mockImageUrls[Math.floor(Math.random() * mockImageUrls.length)];
-    onUploadGeneralEvidence(randomUrl, 'General zone 4 landfill sweep verification log.');
-    alert('General operational evidence photo logged successfully!');
-  };
+  const handleUpload=async(files:FileList|null)=>{const file=files?.[0];if(!file)return;const task=tasks.find(item=>item.status!=='Completed');if(!task){setError('No active assignment is available for this evidence.');return;}setUploading(true);setError('');try{await onUploadGeneralEvidence(file,task.id);}catch(cause){setError(cause instanceof Error?cause.message:'Evidence could not be uploaded.');}finally{setUploading(false);if(fileInput.current)fileInput.current.value='';}};
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -80,14 +74,17 @@ export default function EvidenceManagement({ tasks, onUploadGeneralEvidence }: E
           <p className="text-xs text-gray-400 mt-1">Review, audit, and preview secure before/after photographic proof files.</p>
         </div>
 
+        <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden" onChange={event=>void handleUpload(event.target.files)}/>
         <button
-          onClick={handleSimulateNewUpload}
+          onClick={()=>fileInput.current?.click()}
+          disabled={uploading}
           className="bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
         >
           <Upload className="w-4 h-4" />
-          <span>Upload General Photo</span>
+          <span>{uploading?'Uploading…':'Upload General Photo'}</span>
         </button>
       </div>
+      {error&&<div role="alert" className="bg-red-50 text-red-700 border border-red-100 p-3 rounded-xl text-xs font-semibold">{error}</div>}
 
       {/* Filter and control grid bar */}
       <div className="bg-white rounded-3xl border border-gray-250/80 p-5 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">

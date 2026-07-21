@@ -4,7 +4,7 @@ import { MapPin, Camera, Images, Send, FileText, X, Compass } from 'lucide-react
 import { DISTRICTS, MUNICIPALITIES, WASTE_CATEGORIES, PRIORITIES, Report, GPSCoordinates } from '../../lib/citizenData';
 
 interface ReportWasteProps {
-  onSubmit: (report: Omit<Report, 'id' | 'referenceNumber' | 'status' | 'date'> & {evidenceFiles?:File[]}) => void;
+  onSubmit: (report: Omit<Report, 'id' | 'referenceNumber' | 'status' | 'date'> & {evidenceFiles?:File[]}) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -20,11 +20,14 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
   const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
   const [gps, setGps] = useState<GPSCoordinates | null>(null);
   const [isDetectingGps, setIsDetectingGps] = useState(false);
+  const [gpsError,setGpsError]=useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [evidenceFiles,setEvidenceFiles]=useState<File[]>([]);
   const cameraInput=useRef<HTMLInputElement>(null);
   const galleryInput=useRef<HTMLInputElement>(null);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // Update municipality options based on selected district
   useEffect(() => {
@@ -36,30 +39,12 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
     }
   }, [district]);
 
-  // Handle GPS detection simulation
+  // Capture the citizen's real browser/device coordinates.
   const handleDetectGPS = () => {
+    setGpsError('');
+    if(!navigator.geolocation){setGpsError('Location services are not supported on this device.');return;}
     setIsDetectingGps(true);
-    setTimeout(() => {
-      // Simulate realistic coordinates in Freetown, Bo, Makeni, etc.
-      let lat = 8.4844;
-      let lng = -13.2344;
-      if (district.includes('Bo')) {
-        lat = 7.9628;
-        lng = -11.7401;
-      } else if (district.includes('Kenema')) {
-        lat = 7.8731;
-        lng = -11.1867;
-      } else if (district.includes('Bombali')) {
-        lat = 8.8824;
-        lng = -12.0435;
-      } else {
-        // Random slight offsets around Freetown for variety
-        lat = 8.48 + (Math.random() - 0.5) * 0.05;
-        lng = -13.23 + (Math.random() - 0.5) * 0.05;
-      }
-      setGps({ lat: parseFloat(lat.toFixed(4)), lng: parseFloat(lng.toFixed(4)) });
-      setIsDetectingGps(false);
-    }, 1200);
+    navigator.geolocation.getCurrentPosition(position=>{setGps({lat:Number(position.coords.latitude.toFixed(6)),lng:Number(position.coords.longitude.toFixed(6))});setIsDetectingGps(false);},()=>{setGpsError('Location permission was denied or the position is unavailable. You may still submit the written address.');setIsDetectingGps(false);},{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
   };
 
   const handlePhotoUpload = (files:FileList|null) => {if(!files)return;const accepted=Array.from(files).filter(file=>['image/jpeg','image/png','image/webp'].includes(file.type)&&file.size<=8*1024*1024).slice(0,5-evidenceFiles.length);setEvidenceFiles(current=>[...current,...accepted]);setPhotos(current=>[...current,...accepted.map(file=>URL.createObjectURL(file))]);};
@@ -76,7 +61,7 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
       zone,
       priority,
       photos,
-      gps: gps || { lat: 8.4844, lng: -13.2344 }
+      gps
     };
     operationalStore.setItem('ecoclean_citizen_draft_report', JSON.stringify(draft));
     setDraftSaved(true);
@@ -104,31 +89,38 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError('');
     if (!title.trim() || !description.trim() || !location.trim()) {
+      setSubmitError('Add a title, a description, and the waste location before submitting.');
       return;
     }
+    if(!gps){setSubmitError('Lock your current GPS location before submitting so the assigned crew receives real coordinates.');return;}
 
-    const defaultGps = gps || { lat: 8.4844, lng: -13.2344 };
-
-    onSubmit({
-      title,
-      category,
-      description,
-      location,
-      district,
-      municipality,
-      ward,
-      zone,
-      priority,
-      photos: photos.length > 0 ? photos : ['/assets/demo-waste.svg'],
-      gps: defaultGps
-      ,evidenceFiles
-    });
-
-    // Clear draft on successful submission
-    operationalStore.removeItem('ecoclean_citizen_draft_report');
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        title,
+        category,
+        description,
+        location,
+        district,
+        municipality,
+        ward,
+        zone,
+        priority,
+        photos: photos.length > 0 ? photos : ['/assets/demo-waste.svg'],
+        gps,
+        evidenceFiles
+      });
+      // A draft is removed only after MariaDB and any evidence uploads confirm success.
+      operationalStore.removeItem('ecoclean_citizen_draft_report');
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'The report could not be submitted. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const hasDraft = !!operationalStore.getItem('ecoclean_citizen_draft_report');
@@ -403,6 +395,13 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
           </div>
         </div>
 
+        {submitError && (
+          <div role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-bold text-red-700">
+            {submitError}
+          </div>
+        )}
+        {gpsError&&<div role="alert" className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-700">{gpsError}</div>}
+
         {/* Buttons / Actions */}
         <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 pt-6 border-t border-gray-100">
           <button
@@ -425,10 +424,11 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
 
             <button
               type="submit"
-              className="text-xs font-bold text-white bg-brand-primary hover:bg-brand-secondary py-3 px-7 rounded-xl transition-all shadow-md shadow-brand-primary/10 cursor-pointer flex items-center justify-center gap-1.5"
+              disabled={isSubmitting}
+              className="text-xs font-bold text-white bg-brand-primary hover:bg-brand-secondary disabled:bg-gray-300 disabled:cursor-wait py-3 px-7 rounded-xl transition-all shadow-md shadow-brand-primary/10 cursor-pointer flex items-center justify-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>Submit Waste Report</span>
+              <span>{isSubmitting ? 'Submitting Report…' : 'Submit Waste Report'}</span>
             </button>
           </div>
         </div>

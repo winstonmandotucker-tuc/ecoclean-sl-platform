@@ -28,7 +28,7 @@ import VerificationCenter from './supervisor/VerificationCenter';
 import MunicipalityPerformance from './supervisor/MunicipalityPerformance';
 import SupervisorNotifications from './supervisor/SupervisorNotifications';
 import SupervisorProfile from './supervisor/SupervisorProfile';
-import { authService, notificationService, reportService, staffDirectoryService, taskService } from '../lib/services';
+import { announcementService, authService, directNotificationService, notificationService, reportService, staffDirectoryService, taskService } from '../lib/services';
 
 // Import supervisor defaults
 import { 
@@ -173,8 +173,7 @@ export default function SupervisorPortal({ user, onBackToSelection, onLogout }: 
       const response=await taskService.create({reportId:Number(reportId),assignedTo:Number(staffId),title:`Dispatch: ${selectedRep.title}`,description:notesText,priority:priority.toLowerCase(),dueAt:new Date(Date.now()+(priority==='High'?8:24)*60*60*1000).toISOString()});
       persistedTask=response.data;
     } catch (error) {
-      alert(error instanceof Error?error.message:'The assignment could not be saved.');
-      return;
+      throw error instanceof Error ? error : new Error('The assignment could not be saved.');
     }
 
     // A. Update the view after MariaDB confirms the assignment.
@@ -261,24 +260,10 @@ export default function SupervisorPortal({ user, onBackToSelection, onLogout }: 
   };
 
   // 2. Communicate Message Callback
-  const handleSendMessageToStaff = (staffId: string, message: string) => {
+  const handleSendMessageToStaff = async (staffId: string, message: string) => {
     const selectedStaff = staff.find(s => s.id === staffId);
     if (!selectedStaff) return;
-
-    // Pushes message notification directly to operator's console
-    const storedStaffNotifs = operationalStore.getItem('ecoclean_staff_notifications');
-    let staffNotifs = [];
-    if (storedStaffNotifs) staffNotifs = JSON.parse(storedStaffNotifs);
-    
-    const newStaffNotification = {
-      id: `SN-${Math.floor(100 + Math.random() * 900)}`,
-      title: 'Instruction from Control Center',
-      body: message,
-      date: 'Just Now',
-      type: 'Supervisor Message' as const,
-      read: false
-    };
-    operationalStore.setItem('ecoclean_staff_notifications', JSON.stringify([newStaffNotification, ...staffNotifs]));
+    await directNotificationService.send(staffId,'Instruction from Control Center',message);
 
     // Log supervisor warning audit trace
     const newSupNotif: SupervisorNotification = {
@@ -366,9 +351,10 @@ export default function SupervisorPortal({ user, onBackToSelection, onLogout }: 
   };
 
   // 7. Approve Quality Verification
-  const handleApproveVerification = (taskId: string) => {
+  const handleApproveVerification = async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
+    await taskService.update(taskId,{status:'verified',note:'Quality inspection approved by supervisor.'});
 
     // A. Update Task status
     const updatedTasks = tasks.map(t => {
@@ -439,9 +425,10 @@ export default function SupervisorPortal({ user, onBackToSelection, onLogout }: 
   };
 
   // 8. Reject Quality Verification
-  const handleRejectVerification = (taskId: string, feedback: string) => {
+  const handleRejectVerification = async (taskId: string, feedback: string) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
+    await taskService.update(taskId,{status:'rejected',note:feedback});
 
     // A. Put task back to "In Progress"
     const updatedTasks = tasks.map(t => {
@@ -474,35 +461,8 @@ export default function SupervisorPortal({ user, onBackToSelection, onLogout }: 
   };
 
   // 9. Send Broadcast Alert to all cells
-  const handleSendBroadcast = (alertMsg: string) => {
-    // Pushes broadcast alerts to both citizen notifications and staff notifications
-    const storedCitizenNotifs = operationalStore.getItem('ecoclean_notifications');
-    let citizenNotifs = [];
-    if (storedCitizenNotifs) citizenNotifs = JSON.parse(storedCitizenNotifs);
-
-    const newCitizenNotif = {
-      id: `nt-${Math.floor(100 + Math.random() * 900)}`,
-      title: '🚨 Municipal Safety Alert',
-      body: alertMsg,
-      date: 'Just Now',
-      type: 'Environmental Alert' as const,
-      read: false
-    };
-    operationalStore.setItem('ecoclean_notifications', JSON.stringify([newCitizenNotif, ...citizenNotifs]));
-
-    const storedStaffNotifs = operationalStore.getItem('ecoclean_staff_notifications');
-    let staffNotifs = [];
-    if (storedStaffNotifs) staffNotifs = JSON.parse(storedStaffNotifs);
-    
-    const newStaffNotification = {
-      id: `SN-${Math.floor(100 + Math.random() * 900)}`,
-      title: '🚨 HQ Operational Alert',
-      body: alertMsg,
-      date: 'Just Now',
-      type: 'Environmental Alert' as const,
-      read: false
-    };
-    operationalStore.setItem('ecoclean_staff_notifications', JSON.stringify([newStaffNotification, ...staffNotifs]));
+  const handleSendBroadcast = async (alertMsg: string) => {
+    await announcementService.publish({title:'Municipal Safety Alert',body:alertMsg});
   };
 
   // 10. Dispatch Fast Standby Crew

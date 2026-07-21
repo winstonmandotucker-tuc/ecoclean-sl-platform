@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, UserPlus, SlidersHorizontal, CheckCircle2, AlertTriangle, Trash2, Shield, MoreVertical } from 'lucide-react';
 import { AdminUser, COUNTRIES } from '../../lib/adminData';
+import { adminUserService, authService } from '../../lib/services';
 
 interface UserManagementProps {
   users: AdminUser[];
@@ -22,56 +23,44 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
   const [newRole, setNewRole] = useState<'citizen' | 'staff' | 'supervisor' | 'admin'>('citizen');
   const [newCountry, setNewCountry] = useState(selectedCountryCode);
   const [newMuni, setNewMuni] = useState('');
+  const [newPassword,setNewPassword]=useState('');
+  const [submitting,setSubmitting]=useState(false);
+  const [error,setError]=useState('');
+
+  const refreshUsers=async()=>{const {data}=await adminUserService.list();onSaveUsers(data.map((row:any)=>({id:String(row.id),fullName:row.full_name,email:row.email,phone:row.phone||undefined,role:row.role==='ADMINISTRATOR'?'admin':String(row.role).toLowerCase(),countryCode:'SL',municipality:row.municipality||'',status:row.status==='active'?'Active':row.status==='pending'?'Pending':'Suspended',lastActive:'Database account'})) as AdminUser[]);};
 
   // Explicit user status update handler
-  const handleSetStatus = (userId: string, newStatus: 'Active' | 'Suspended' | 'Pending') => {
-    const updated = users.map(u => {
-      if (u.id === userId) {
-        return { ...u, status: newStatus };
-      }
-      return u;
-    });
-    onSaveUsers(updated);
+  const handleSetStatus = async (userId: string, newStatus: 'Active' | 'Suspended' | 'Pending') => {
+    setError('');try{await adminUserService.update(userId,{status:newStatus.toLowerCase()});await refreshUsers();}catch(cause){setError(cause instanceof Error?cause.message:'Account status could not be updated.');}
   };
 
   // Explicit password reset handler
-  const handleResetPassword = (email: string) => {
-    alert(`Secure password reset email dispatched to ${email}. Protocol: SHIELD-PWD-RESET-INITIATED.`);
+  const handleResetPassword = async (email: string) => {
+    setError('');try{await authService.forgotPassword(email);alert('A password recovery request was created. Delivery depends on the configured email provider.');}catch(cause){setError(cause instanceof Error?cause.message:'Password recovery could not be requested.');}
   };
 
   // Delete User Handler
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (confirm('Are you sure you want to revoke this account? This will revoke all database access immediately.')) {
-      const updated = users.filter(u => u.id !== userId);
-      onSaveUsers(updated);
+      setError('');try{await adminUserService.update(userId,{status:'disabled'});await adminUserService.revokeSessions(userId);await refreshUsers();}catch(cause){setError(cause instanceof Error?cause.message:'Account access could not be revoked.');}
     }
   };
 
   // Create User Handler
-  const handleCreateUser = (e: React.FormEvent) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFullName || !newEmail) return;
-
-    const newAcct: AdminUser = {
-      id: `U-${Math.floor(100 + Math.random() * 900)}`,
-      fullName: newFullName,
-      email: newEmail,
-      phone: newPhone || undefined,
-      role: newRole,
-      countryCode: newCountry,
-      municipality: newMuni || `${COUNTRIES.find(c => c.code === newCountry)?.name} Council`,
-      status: 'Active',
-      lastActive: 'Just Created'
-    };
-
-    onSaveUsers([newAcct, ...users]);
+    if (!newFullName || !newEmail || !newPhone || newPassword.length<10) return;
+    setSubmitting(true);setError('');
+    try{await adminUserService.create({fullName:newFullName,email:newEmail,phone:newPhone,password:newPassword,role:newRole==='admin'?'ADMINISTRATOR':newRole.toUpperCase()});await refreshUsers();
     
     // Reset Form
     setNewFullName('');
     setNewEmail('');
     setNewPhone('');
     setNewMuni('');
+    setNewPassword('');
     setShowAddForm(false);
+    }catch(cause){setError(cause instanceof Error?cause.message:'The account could not be created.');}finally{setSubmitting(false);}
   };
 
   // Filter logic
@@ -104,11 +93,13 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
           <span>Provision New Account</span>
         </button>
       </div>
+      {error&&!showAddForm&&<div role="alert" className="bg-red-50 text-red-700 border border-red-100 p-3 rounded-xl text-xs font-semibold">{error}</div>}
 
       {/* Account Provisioning Drawer Form */}
       {showAddForm && (
         <form onSubmit={handleCreateUser} className="bg-emerald-50/20 border border-brand-primary/10 rounded-2xl p-5 space-y-4 shadow-sm animate-fade-in">
           <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider font-mono">Provision New Core User Credentials</h3>
+          {error&&<div role="alert" className="bg-red-50 text-red-700 border border-red-100 p-3 rounded-xl text-xs font-semibold">{error}</div>}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-gray-500 font-mono">Full Name</label>
@@ -120,6 +111,11 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
                 placeholder="Dr. Samuel Koroma"
                 className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-brand-primary"
               />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-gray-500 font-mono">Temporary Password</label>
+              <input type="password" required minLength={10} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="At least 10 characters" className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-brand-primary"/>
             </div>
 
             <div className="space-y-1">
@@ -138,6 +134,7 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
               <label className="text-[11px] font-bold text-gray-500 font-mono">Telephone</label>
               <input 
                 type="text" 
+                required
                 value={newPhone} 
                 onChange={e => setNewPhone(e.target.value)}
                 placeholder="+232 77 000111"
@@ -166,7 +163,7 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
                 onChange={e => setNewCountry(e.target.value)}
                 className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-brand-primary"
               >
-                {COUNTRIES.map(c => (
+                {COUNTRIES.filter(c=>c.code==='SL').map(c => (
                   <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
                 ))}
               </select>
@@ -194,9 +191,10 @@ export default function UserManagement({ users, onSaveUsers, selectedCountryCode
             </button>
             <button 
               type="submit" 
+              disabled={submitting}
               className="text-xs font-bold px-4 py-1.5 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary cursor-pointer"
             >
-              Confirm Authorization
+              {submitting?'Creating Account…':'Confirm Authorization'}
             </button>
           </div>
         </form>

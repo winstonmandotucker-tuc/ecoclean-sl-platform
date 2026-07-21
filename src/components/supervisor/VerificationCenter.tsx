@@ -7,8 +7,8 @@ import { StaffTask } from '../../lib/staffData';
 
 interface VerificationCenterProps {
   tasks: StaffTask[];
-  onApproveVerification: (taskId: string) => void;
-  onRejectVerification: (taskId: string, feedback: string) => void;
+  onApproveVerification: (taskId: string) => Promise<void>;
+  onRejectVerification: (taskId: string, feedback: string) => Promise<void>;
 }
 
 export default function VerificationCenter({
@@ -23,14 +23,15 @@ export default function VerificationCenter({
   const [rejectFeedback, setRejectFeedback] = useState('');
   const [showRejectBox, setShowRejectBox] = useState(false);
   const [successActionMsg, setSuccessActionMsg] = useState('');
+  const [actionError,setActionError]=useState('');const [submitting,setSubmitting]=useState(false);
 
   // Fallback images for "before" and "after" if they are empty
   const defaultBefore = '/assets/demo-waste.svg';
   const defaultAfter = '/assets/demo-waste.svg';
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!selectedTask) return;
-    onApproveVerification(selectedTask.id);
+    setSubmitting(true);setActionError('');try{await onApproveVerification(selectedTask.id);}catch(cause){setActionError(cause instanceof Error?cause.message:'Verification could not be saved.');setSubmitting(false);return;}setSubmitting(false);
     setSuccessActionMsg('✓ Task successfully authorized, verified, and closed out!');
     
     setTimeout(() => {
@@ -40,11 +41,11 @@ export default function VerificationCenter({
     }, 2000);
   };
 
-  const handleRejectSubmit = (e: React.FormEvent) => {
+  const handleRejectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask || !rejectFeedback.trim()) return;
 
-    onRejectVerification(selectedTask.id, rejectFeedback);
+    setSubmitting(true);setActionError('');try{await onRejectVerification(selectedTask.id, rejectFeedback);}catch(cause){setActionError(cause instanceof Error?cause.message:'Rejection could not be saved.');setSubmitting(false);return;}setSubmitting(false);
     setSuccessActionMsg('🔴 Task declined. Re-execution dispatches sent to crew terminal.');
     setRejectFeedback('');
     
@@ -203,6 +204,7 @@ export default function VerificationCenter({
                   {successActionMsg}
                 </div>
               )}
+              {actionError&&<div role="alert" className="p-3 bg-red-50 border border-red-100 text-red-700 rounded-2xl text-center text-xs font-bold">{actionError}</div>}
 
               {/* Action layout */}
               {!successActionMsg && (
@@ -230,9 +232,10 @@ export default function VerificationCenter({
                         </button>
                         <button
                           type="submit"
+                          disabled={submitting}
                           className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer"
                         >
-                          Confirm Decline & Dispatch Back
+                          {submitting?'Saving…':'Confirm Decline & Dispatch Back'}
                         </button>
                       </div>
                     </form>
@@ -248,10 +251,11 @@ export default function VerificationCenter({
 
                       <button
                         onClick={handleApprove}
+                        disabled={submitting}
                         className="flex-1 py-3 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-brand-primary/10 flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <CheckCircle className="w-4 h-4 shrink-0 text-brand-accent" />
-                        <span>Approve restated state & Close</span>
+                        <span>{submitting?'Saving…':'Approve restated state & Close'}</span>
                       </button>
                     </div>
                   )}

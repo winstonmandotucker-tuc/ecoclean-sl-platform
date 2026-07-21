@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Send, Bell, CheckCircle2, Sliders, Globe, ShieldCheck, Mail, Smartphone } from 'lucide-react';
 import { CountryConfig, DEFAULT_SYSTEM_CONFIG } from '../../lib/adminData';
+import { announcementService } from '../../lib/services';
 
 interface NationalNotificationCenterProps {
   country: CountryConfig;
@@ -18,16 +19,25 @@ export default function NationalNotificationCenter({
   const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationBody, setNotificationBody] = useState('');
   const [broadcastSuccess, setBroadcastSuccess] = useState(false);
+  const [submitting,setSubmitting]=useState(false);
+  const [error,setError]=useState('');
 
   // Active notifications lists
   const [notifs, setNotifs] = useState(systemConfig.notifications);
 
-  const handleDispatchNotification = (e: React.FormEvent) => {
+  const handleDispatchNotification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!notificationTitle || !notificationBody) return;
 
+    setSubmitting(true);
+    setError('');
+    try {
+      if(broadcastChannel!=='in_app')throw new Error(`${broadcastChannel.toUpperCase()} delivery is unavailable until a production provider is configured. Select the ECOCLEAN in-app channel.`);
+      const targetRole=targetGroup==='Supervisors & Staff'?'STAFF':undefined;
+      const result=await announcementService.publish({title:notificationTitle,body:notificationBody,targetRole});
+
     const newNotif = {
-      id: `N-MAS-${Math.floor(100 + Math.random() * 900)}`,
+      id: `N-${result.data.id}`,
       title: notificationTitle,
       body: notificationBody,
       date: new Date().toISOString().slice(0, 10),
@@ -49,6 +59,11 @@ export default function NationalNotificationCenter({
     setNotificationBody('');
     setBroadcastSuccess(true);
     setTimeout(() => setBroadcastSuccess(false), 4000);
+    } catch (cause) {
+      setError(cause instanceof Error?cause.message:'The notification could not be transmitted.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -64,9 +79,10 @@ export default function NationalNotificationCenter({
       {broadcastSuccess && (
         <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 p-4 rounded-xl flex items-center gap-2 font-semibold text-xs animate-fade-in">
           <ShieldCheck className="w-5 h-5 text-emerald-500 animate-bounce" />
-          <span>Sovereign announcement pushed over cellular gateways and in-app feeds successfully.</span>
+          <span>Announcement saved and delivered to the selected ECOCLEAN in-app audience.</span>
         </div>
       )}
+      {error&&<div role="alert" className="bg-red-50 text-red-700 border border-red-100 p-4 rounded-xl text-xs font-semibold">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -133,10 +149,11 @@ export default function NationalNotificationCenter({
             <div className="pt-2 flex justify-end">
               <button 
                 type="submit"
+                disabled={submitting}
                 className="text-xs font-bold px-4 py-2.5 rounded-xl bg-brand-primary hover:bg-brand-secondary text-white transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Send className="w-4 h-4 text-brand-accent" />
-                <span>Transmit Broadcast</span>
+                <span>{submitting?'Transmitting…':'Transmit Broadcast'}</span>
               </button>
             </div>
           </form>

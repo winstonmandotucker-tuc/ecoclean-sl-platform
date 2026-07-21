@@ -58,6 +58,18 @@ export const supportService = {
   closeTicket: (id:number|string) => api<void>(`/support/tickets/${id}/close`,{method:'POST'}),
 };
 export const dashboardService = { get: () => api<{data:any}>('/dashboard') };
+export const adminUserService = {
+  list: () => api<{data:any[]}>('/users'),
+  create: (payload:unknown) => api<{data:any}>('/admin/users',{method:'POST',body:JSON.stringify(payload)}),
+  update: (id:number|string,payload:unknown) => api<void>(`/admin/users/${id}`,{method:'PATCH',body:JSON.stringify(payload)}),
+  revokeSessions: (id:number|string) => api<void>(`/auth/users/${id}/revoke-sessions`,{method:'POST'}),
+};
+export const announcementService = { publish:(payload:unknown)=>api<{data:any}>('/announcements',{method:'POST',body:JSON.stringify(payload)}) };
+export const directNotificationService = { send:(userId:number|string,title:string,body:string)=>api<{data:any}>('/notifications/direct',{method:'POST',body:JSON.stringify({userId:Number(userId),title,body})}) };
+export const systemSettingsService = {
+  get: () => api<{data:Record<string,unknown>}>('/system/settings'),
+  save: (key:string,value:unknown) => api<void>(`/system/settings/${key}`,{method:'PUT',body:JSON.stringify({value})}),
+};
 export const operationsService = {
   health: () => api<{data:any}>('/operations/health'),
   metrics: () => api<{data:any[]}>('/operations/metrics'),

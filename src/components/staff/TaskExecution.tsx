@@ -10,7 +10,7 @@ import { mediaUrl } from '../../lib/api';
 interface TaskExecutionProps {
   task: StaffTask | null;
   onBackToDetails: () => void;
-  onUpdateStatus: (taskId: string, newStatus: StaffTask['status'], notes: string[], photosAfter: string[]) => void;
+  onUpdateStatus: (taskId: string, newStatus: StaffTask['status'], notes: string[], photosAfter: string[]) => Promise<void>;
 }
 
 export default function TaskExecution({ task, onBackToDetails, onUpdateStatus }: TaskExecutionProps) {
@@ -82,7 +82,7 @@ export default function TaskExecution({ task, onBackToDetails, onUpdateStatus }:
         {const persistedPhotos:string[]=[];for(const file of evidenceFiles){const {data}=await uploadService.upload('task_evidence',file,{taskId:task.id});const url=mediaUrl(data[0].url);if(url)persistedPhotos.push(url);}setUploadedPhotos(persistedPhotos);nextStatus = 'Verification Pending';
         addedNotes.push('Cleanup done. After photos submitted for supervisor clearance.');
         if (activeNotes.trim()) addedNotes.push(`Operator Notes: ${activeNotes}`);
-        onUpdateStatus(task.id, nextStatus, addedNotes, persistedPhotos);
+        await onUpdateStatus(task.id, nextStatus, addedNotes, persistedPhotos);
         setActiveNotes('');
         return;}
       case 'Verification Pending':
@@ -92,7 +92,7 @@ export default function TaskExecution({ task, onBackToDetails, onUpdateStatus }:
     }
 
     if (nextStatus) {
-      onUpdateStatus(task.id, nextStatus, addedNotes, uploadedPhotos);
+      await onUpdateStatus(task.id, nextStatus, addedNotes, uploadedPhotos);
       if (nextStatus === 'Verification Pending') {
         setActiveNotes('');
       }

@@ -10,7 +10,7 @@ import { reportExportService, type ReportExportFormat } from '../../lib/services
 interface ReportReviewCenterProps {
   reports: Report[];
   staff: FieldStaff[];
-  onAssignReport: (reportId: string, staffId: string, priority: 'Low' | 'Medium' | 'High', notes: string, fuelCode: string) => void;
+  onAssignReport: (reportId: string, staffId: string, priority: 'Low' | 'Medium' | 'High', notes: string, fuelCode: string) => Promise<void>;
 }
 
 export default function ReportReviewCenter({
@@ -30,6 +30,8 @@ export default function ReportReviewCenter({
   const [dispatchNotes, setDispatchNotes] = useState<string>('');
   const [fuelAllocation, setFuelAllocation] = useState<string>('15 Liters');
   const [assignmentSuccess, setAssignmentSuccess] = useState<boolean>(false);
+  const [assignmentError, setAssignmentError] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
   const [exporting,setExporting]=useState<string|null>(null);
   const exportReports=async(format:ReportExportFormat)=>{setExporting(format);try{await reportExportService.download(format,{priority:filterPriority==='All'?undefined:filterPriority});}finally{setExporting(null);}};
 
@@ -45,21 +47,29 @@ export default function ReportReviewCenter({
     return matchesCategory && matchesPriority && matchesDistrict && matchesSearch;
   });
 
-  const handleDispatchSubmit = (e: React.FormEvent) => {
+  const handleDispatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedReport || !selectedStaffId) return;
 
     // Trigger assign callback
     const fuelCode = `SL-FUL-${Math.floor(1000 + Math.random() * 9000)}`;
-    onAssignReport(
-      selectedReport.id, 
-      selectedStaffId, 
-      assignedPriority, 
-      dispatchNotes || `Urgent dispatch for clearing ${selectedReport.title}. Fuel authorized: ${fuelAllocation}.`,
-      fuelCode
-    );
-
-    setAssignmentSuccess(true);
+    setAssignmentError('');
+    setIsAssigning(true);
+    try {
+      await onAssignReport(
+        selectedReport.id,
+        selectedStaffId,
+        assignedPriority,
+        dispatchNotes || `Urgent dispatch for clearing ${selectedReport.title}. Fuel authorized: ${fuelAllocation}.`,
+        fuelCode
+      );
+      setAssignmentSuccess(true);
+    } catch (error) {
+      setAssignmentError(error instanceof Error ? error.message : 'The crew assignment could not be saved.');
+      return;
+    } finally {
+      setIsAssigning(false);
+    }
     setTimeout(() => {
       setAssignmentSuccess(false);
       // Reset dispatch fields
@@ -424,13 +434,14 @@ export default function ReportReviewCenter({
                         ✓ Dispatch authorized! Task reference generated & pushed to field staff terminal.
                       </div>
                     )}
+                    {assignmentError && <div role="alert" className="p-2.5 bg-red-50 text-red-700 border border-red-100 rounded-xl text-center text-xs font-bold">{assignmentError}</div>}
 
                     <button
                       type="submit"
-                      disabled={!selectedStaffId || assignmentSuccess}
+                      disabled={!selectedStaffId || assignmentSuccess || isAssigning}
                       className="w-full py-3 bg-brand-primary hover:bg-brand-secondary disabled:bg-gray-100 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-brand-primary/10 flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <span>Authorize Crew Dispatch & Unlock Route</span>
+                      <span>{isAssigning ? 'Saving Assignment…' : 'Authorize Crew Dispatch & Unlock Route'}</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </form>

@@ -7,7 +7,7 @@ import { FieldStaff } from '../../lib/supervisorData';
 
 interface StaffManagementProps {
   staff: FieldStaff[];
-  onSendMessageToStaff: (staffId: string, message: string) => void;
+  onSendMessageToStaff: (staffId: string, message: string) => Promise<void>;
   onUpdateStaffVessel: (staffId: string, newVessel: string) => void;
 }
 
@@ -21,6 +21,7 @@ export default function StaffManagement({
   const [selectedStaffForMsg, setSelectedStaffForMsg] = useState<FieldStaff | null>(null);
   const [messageText, setMessageText] = useState('');
   const [messageSuccess, setMessageSuccess] = useState(false);
+  const [sending,setSending]=useState(false);const [messageError,setMessageError]=useState('');
 
   // Vessel edit state
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
@@ -36,13 +37,14 @@ export default function StaffManagement({
     return matchesStatus && matchesSearch;
   });
 
-  const handleSendMessageSubmit = (e: React.FormEvent) => {
+  const handleSendMessageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStaffForMsg || !messageText.trim()) return;
 
-    onSendMessageToStaff(selectedStaffForMsg.id, messageText);
+    setSending(true);setMessageError('');try{await onSendMessageToStaff(selectedStaffForMsg.id, messageText);}catch(cause){setMessageError(cause instanceof Error?cause.message:'The message could not be sent.');setSending(false);return;}
     setMessageSuccess(true);
     setMessageText('');
+    setSending(false);
     setTimeout(() => {
       setMessageSuccess(false);
       setSelectedStaffForMsg(null);
@@ -267,6 +269,7 @@ export default function StaffManagement({
                   ✓ Dispatch instruction sent to operator's mobile console!
                 </div>
               )}
+              {messageError&&<div role="alert" className="p-2 bg-red-50 text-red-700 border border-red-100 rounded-lg text-center text-[10px] font-bold">{messageError}</div>}
 
               <div className="flex gap-2">
                 <button
@@ -278,11 +281,11 @@ export default function StaffManagement({
                 </button>
                 <button
                   type="submit"
-                  disabled={!messageText.trim() || messageSuccess}
+                  disabled={!messageText.trim() || messageSuccess || sending}
                   className="flex-1 py-2 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5 text-brand-accent" />
-                  <span>Send Message</span>
+                  <span>{sending?'Sending…':'Send Message'}</span>
                 </button>
               </div>
             </form>

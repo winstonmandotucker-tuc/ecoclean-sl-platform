@@ -32,6 +32,7 @@ import {
   DEFAULT_SYSTEM_CONFIG, CountryConfig, AdminUser, AuditLog, RBACRole, getCountryReports 
 } from '../lib/adminData';
 import { Report } from '../lib/citizenData';
+import { adminUserService, reportService } from '../lib/services';
 
 import {
   FleetManagementView,
@@ -151,6 +152,11 @@ export default function AdminPortal({ user, onBackToSelection, onLogout }: Admin
       console.error('Error seeding admin portal resources:', e);
     }
   }, []);
+
+  useEffect(()=>{void Promise.all([adminUserService.list(),reportService.list()]).then(([userResult,reportResult])=>{
+    setAdminUsers(userResult.data.map((row:any)=>({id:String(row.id),fullName:row.full_name,email:row.email,phone:row.phone||undefined,role:row.role==='ADMINISTRATOR'?'admin':String(row.role).toLowerCase(),countryCode:'SL',municipality:'',status:row.status==='active'?'Active':row.status==='pending'?'Pending':'Suspended',lastActive:'Database account'})) as AdminUser[]);
+    setAllReports(reportResult.data.map((row:any)=>({id:String(row.id),referenceNumber:row.reference,title:row.title,category:row.category,description:row.description,location:row.address||'GIS location recorded',district:row.district||'Unassigned',municipality:row.municipality||'Unassigned',ward:row.ward||'Unassigned',zone:row.zone||'Unassigned',priority:String(row.priority||'medium').replace(/^./,(value:string)=>value.toUpperCase()),status:String(row.status||'pending').split('_').map((part:string)=>part[0].toUpperCase()+part.slice(1)).join(' '),date:String(row.created_at||'').slice(0,10),photos:[],gps:{lat:Number(row.latitude||8.4844),lng:Number(row.longitude||-13.2344)}})) as Report[]);
+  }).catch(error=>console.error('Admin operational data could not be loaded.',error));},[]);
 
   // Save updates helper functions
   const saveReportsState = (newReports: Report[]) => {
