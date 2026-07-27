@@ -16,6 +16,7 @@ import { config } from './config.js';
 import { checkDatabase, pool } from './db.js';
 import { enterpriseRoutes } from './enterpriseRoutes.js';
 import { userExperienceRoutes } from './userExperienceRoutes.js';
+import { speechRoutes } from './speechRoutes.js';
 import { accessibleUpload } from './mediaAccess.js';
 import { startWorkers } from './workers.js';
 
@@ -327,5 +328,6 @@ app.get('/api/dashboard',authenticate,async(request,response)=>{const role=reque
 
 app.use('/api',enterpriseRoutes);
 app.use('/api',userExperienceRoutes);
+app.use('/api',speechRoutes);
 app.use((_request,response) => response.status(404).json({ error:'API endpoint not found.' }));
 app.listen(config.port, async () => { await checkDatabase(); startWorkers(); console.log(`ECOCLEAN API running at http://127.0.0.1:${config.port}`); });

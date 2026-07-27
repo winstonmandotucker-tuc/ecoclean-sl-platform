@@ -21,6 +21,15 @@ export const config = {
   clamScanBinary: process.env.CLAMDSCAN_BINARY,
   requireCleanUploads: process.env.REQUIRE_CLEAN_UPLOADS === 'true' || process.env.NODE_ENV === 'production',
   workersEnabled: process.env.WORKERS_ENABLED === 'true',
+  speech: {
+    provider: process.env.SPEECH_PROVIDER || 'disabled',
+    apiKey: process.env.SPEECH_API_KEY || process.env.OPENAI_API_KEY || '',
+    baseUrl: (process.env.SPEECH_API_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/,''),
+    transcriptionModel: process.env.SPEECH_TRANSCRIPTION_MODEL || 'gpt-4o-mini-transcribe',
+    translationModel: process.env.SPEECH_TRANSLATION_MODEL || 'whisper-1',
+    synthesisModel: process.env.SPEECH_SYNTHESIS_MODEL || 'gpt-4o-mini-tts',
+    voice: process.env.SPEECH_VOICE || 'coral',
+  },
   workerIntervalMs: Math.max(30_000, Number(process.env.WORKER_INTERVAL_MS || 60_000)),
   db: {
     host: process.env.DB_HOST || '127.0.0.1',

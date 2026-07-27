@@ -1,5 +1,5 @@
 import type { User } from '../types';
-import { api, downloadApi } from './api';
+import { api, audioApi, downloadApi } from './api';
 
 export const authService = {
   login: (identifier:string,password:string,remember=false) => api<{user:User}>('/auth/login',{method:'POST',body:JSON.stringify({identifier,password,remember})}),
@@ -36,6 +36,12 @@ export const reportService = {
 export const reportConversationService={
   get:(reportId:number|string)=>api<{data:{conversationId:number;messages:any[];closed:boolean}}>(`/reports/${reportId}/conversation`),
   send:(reportId:number|string,body:string)=>api<{data:any}>(`/reports/${reportId}/messages`,{method:'POST',body:JSON.stringify({body})}),
+};
+export const speechService={
+  capabilities:()=>api<{data:{enabled:boolean;provider:string;languages:{code:string;name:string}[];audioRetention:string}}>('/speech/capabilities'),
+  transcribe:(file:File,language:string)=>{const body=new FormData();body.append('audio',file);body.append('language',language);body.append('consent','true');return api<{data:{id:number;language:string;languageName:string;originalTranscript:string;englishTranslation:string;requiresConfirmation:boolean}}>('/speech/transcribe',{method:'POST',body});},
+  confirm:(id:number|string)=>api<void>(`/speech/jobs/${id}/confirm`,{method:'POST'}),
+  synthesize:(text:string,language:string)=>audioApi('/speech/synthesize',{text,language,consent:true}),
 };
 export type ReportExportFormat='csv'|'pdf'|'xlsx'|'docx'|'json'|'geojson';
 export const reportExportService={download:(format:ReportExportFormat,filters:{dateRange?:string;status?:string;priority?:string}={})=>{const query=new URLSearchParams({format,...Object.fromEntries(Object.entries(filters).filter(([,value])=>value&&value!=='All')) as Record<string,string>});return downloadApi(`/reports/export-professional?${query}`);}};

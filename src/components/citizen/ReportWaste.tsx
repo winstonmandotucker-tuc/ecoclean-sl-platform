@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { operationalStore } from '../../lib/operationalStore';
 import { MapPin, Camera, Images, Send, FileText, X, Compass } from 'lucide-react';
 import { DISTRICTS, MUNICIPALITIES, WASTE_CATEGORIES, PRIORITIES, Report, GPSCoordinates } from '../../lib/citizenData';
+import {VoiceInput} from '../VoiceAccessibility';
 
 const DISTRICT_CENTROIDS: Record<string, GPSCoordinates> = {
   'Bo District':{lat:7.9647,lng:-11.7383},'Bombali District':{lat:9.1250,lng:-12.0500},'Bonthe District':{lat:7.5328,lng:-12.5019},
@@ -178,6 +179,7 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
               onChange={(e) => setTitle(e.target.value)}
               className="w-full bg-gray-50/50 border border-gray-200 focus:border-brand-primary focus:bg-white rounded-2xl py-3.5 px-4 text-xs font-medium text-gray-800 transition-all focus:outline-none"
             />
+            <VoiceInput label="Speak issue title" onAccept={(english)=>setTitle(english.slice(0,190))}/>
           </div>
 
           <div className="space-y-2">
@@ -207,6 +209,7 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
             onChange={(e) => setDescription(e.target.value)}
             className="w-full bg-gray-50/50 border border-gray-200 focus:border-brand-primary focus:bg-white rounded-2xl py-3.5 px-4 text-xs font-medium text-gray-800 transition-all focus:outline-none"
           />
+          <VoiceInput label="Describe issue by voice" onAccept={(english)=>setDescription(current=>current?`${current}\n${english}`:english)}/>
         </div>
 
         {/* Administrative Jurisdiction */}
@@ -252,6 +255,7 @@ export default function ReportWaste({ onSubmit, onCancel }: ReportWasteProps) {
                 onChange={(e) => setWard(e.target.value)}
                 className="w-full bg-white border border-gray-200 focus:border-brand-primary rounded-xl p-2.5 text-xs text-gray-800"
               />
+              <VoiceInput label="Speak landmark" onAccept={(english)=>setLocation(english)}/>
             </div>
 
             <div className="space-y-1.5">

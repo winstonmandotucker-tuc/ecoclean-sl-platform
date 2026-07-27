@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS speech_jobs (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  public_id CHAR(36) NOT NULL DEFAULT (UUID()),
+  user_id BIGINT UNSIGNED NOT NULL,
+  operation ENUM('transcription','translation','synthesis') NOT NULL,
+  source_language VARCHAR(20) NOT NULL,
+  target_language VARCHAR(20) NULL,
+  provider VARCHAR(60) NOT NULL,
+  model_name VARCHAR(120) NULL,
+  status ENUM('processing','completed','failed') NOT NULL DEFAULT 'processing',
+  original_transcript TEXT NULL,
+  translated_text TEXT NULL,
+  user_confirmed_at TIMESTAMP NULL,
+  consent_at TIMESTAMP NOT NULL,
+  error_code VARCHAR(100) NULL,
+  metadata_json JSON NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP NULL,
+  UNIQUE(public_id),
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX(user_id,created_at), INDEX(status,created_at)
+) ENGINE=InnoDB;

@@ -46,7 +46,7 @@ Environment templates are provided for development, testing, and production:
 - `.env.test` — isolated automated-test configuration
 - `.env.production.example` — production template; copy it outside version control and supply strong secrets
 
-Important values are `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `FRONTEND_URL`, `VITE_API_URL`, `VITE_MAP_TILE_URL`, and `VITE_MAP_ATTRIBUTION`. Never deploy the development JWT secret or an empty database password.
+Important values are `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `FRONTEND_URL`, `VITE_API_URL`, `VITE_MAP_TILE_URL`, `VITE_MAP_ATTRIBUTION`, and the optional `SPEECH_*` provider settings. Never deploy the development JWT secret, an empty database password, or a speech API key in frontend/Vercel variables.
 
 Phase 5 adds portable `DB_DUMP_BINARY`, `ARCHIVE_BINARY`, and `CLAMDSCAN_BINARY` paths for Linux, macOS, and Windows/XAMPP deployments.
 
@@ -109,6 +109,7 @@ Server roles are `CITIZEN`, `STAFF`, `SUPERVISOR`, `ADMINISTRATOR`, and `NATIONA
 - `/api/backups`, `/api/security/events`, `/api/auth/sessions`, `/api/operations/health` — deployment operations and security controls
 - `/api/gis/layers`, `/api/gis/markers`, `/api/gis/boundaries`, `/api/gis/communities` — expanded vendor-neutral GIS data
 - `/api/reports/export` — audited Supervisor/Admin report exports in Excel-compatible CSV, PDF, JSON and GeoJSON; Supervisor results are jurisdiction-scoped
+- `/api/speech/*` — consent-controlled transcription, English translation confirmation, and text-to-speech through a replaceable server-side provider adapter
 
 Detailed Phase 3 routes and validation evidence are recorded in `docs/PHASE_3_OPERATIONAL_IMPLEMENTATION.md`.
 
@@ -185,6 +186,7 @@ Production is **not certified** because real email/SMS/push credentials are abse
 
 ## Change log
 
+- 27 July 2026 — added ECOCLEAN Voice Accessibility for English, Krio, Temne, and Mende pilot workflows. Citizen reports and assigned report conversations now accept microphone recordings, display original and English results for confirmation, and provide audio playback. Audio is processed in memory rather than retained; consent and speech-job audit metadata persist in MariaDB. Production provider configuration and limitations are documented in [docs/VOICE_ACCESSIBILITY_IMPLEMENTATION.md](docs/VOICE_ACCESSIBILITY_IMPLEMENTATION.md).
 - 21 July 2026 — hardened mobile report intake, durable media, and operational communication. GPS-denied phones can submit using written landmarks plus an approximate district point; new uploads persist in MariaDB; assigned Citizens and Staff can communicate until completion; Staff can reply to direct Supervisor messages; ten Staff accounts are seeded; and Staff identity self-editing is blocked. Validation evidence is in [docs/MOBILE_MEDIA_COMMUNICATION_VALIDATION.md](docs/MOBILE_MEDIA_COMMUNICATION_VALIDATION.md).
 - 21 July 2026 — corrected silent submit failures across Citizen reports and support, Staff task/evidence operations, Supervisor assignments/messages/verification, and Administrator users/reports/settings/broadcasts. Valid Sierra Leone district UI labels now resolve to canonical MariaDB scope, GPS uses device coordinates, and operational actions wait for API confirmation before showing success. Validation evidence is in [docs/FUNCTIONALITY_CORRECTION_REPORT.md](docs/FUNCTIONALITY_CORRECTION_REPORT.md).
 
